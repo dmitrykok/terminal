@@ -20,7 +20,7 @@
   <Identity
     Name="WindowsTerminalDev"
     Publisher="CN=MZW7P2"
-    Version="0.0.11.0" />
+    Version="0.0.12.0" />
 
   <Properties>
     <DisplayName>ms-resource:AppStoreNameDev</DisplayName>
