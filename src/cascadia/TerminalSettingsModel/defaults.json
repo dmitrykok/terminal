@@ -504,45 +504,70 @@
                 }
             ]
         },
+      {
+        // New tab...
+        "name": { "key": "NewTabParentCommandName" },
+        "commands": [
+          {
+            "iterateOn": "profiles",
+            "icon": "${profile.icon}",
+            "name": "${profile.name}",
+            "command": {
+              "action": "newTab",
+              "profile": "${profile.name}"
+            }
+          }
+        ],
+        "keys": "alt+shift+t"
+      },
         {
-            // New tab...
-            "name": { "key": "NewTabParentCommandName" },
-            "commands": [
+          // Split pane...
+          "name": { "key": "SplitPaneParentCommandName" },
+          "commands": [
+            {
+              "iterateOn": "profiles",
+              "icon": "${profile.icon}",
+              "name": "${profile.name}...",
+              "commands": [
                 {
-                    "iterateOn": "profiles",
-                    "icon": "${profile.icon}",
-                    "name": "${profile.name}",
-                    "command": { "action": "newTab", "profile": "${profile.name}" }
-                }
-            ]
-        },
-        {
-            // Split pane...
-            "name": { "key": "SplitPaneParentCommandName" },
-            "commands": [
+                  "command": {
+                    "action": "splitPane",
+                    "profile": "${profile.name}",
+                    "split": "auto"
+                  }
+                },
                 {
-                    "iterateOn": "profiles",
-                    "icon": "${profile.icon}",
-                    "name": "${profile.name}...",
-                    "commands": [
-                        {
-                            "command": { "action": "splitPane", "profile": "${profile.name}", "split": "auto" }
-                        },
-                        {
-                            "command": { "action": "splitPane", "profile": "${profile.name}", "split": "up" }
-                        },
-                        {
-                            "command": { "action": "splitPane", "profile": "${profile.name}", "split": "down" }
-                        },
-                        {
-                            "command": { "action": "splitPane", "profile": "${profile.name}", "split": "left" }
-                        },
-                        {
-                            "command": { "action": "splitPane", "profile": "${profile.name}", "split": "right" }
-                        }
-                    ]
+                  "command": {
+                    "action": "splitPane",
+                    "profile": "${profile.name}",
+                    "split": "up"
+                  }
+                },
+                {
+                  "command": {
+                    "action": "splitPane",
+                    "profile": "${profile.name}",
+                    "split": "down"
+                  }
+                },
+                {
+                  "command": {
+                    "action": "splitPane",
+                    "profile": "${profile.name}",
+                    "split": "left"
+                  }
+                },
+                {
+                  "command": {
+                    "action": "splitPane",
+                    "profile": "${profile.name}",
+                    "split": "right"
+                  }
                 }
-            ]
+              ]
+            }
+          ],
+          "keys": "alt+shift+s"
         },
         {
             // Set opacity...
