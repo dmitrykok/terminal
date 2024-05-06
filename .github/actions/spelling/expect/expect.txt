@@ -1,3 +1,4 @@
+aaaaabbb
 aabbcc
 ABANDONFONT
 abbcc
@@ -9,6 +10,7 @@ ACCESSTOKEN
 acidev
 ACIOSS
 ACover
+acp
 actctx
 ACTCTXW
 ADDALIAS
@@ -19,6 +21,7 @@ AFew
 AFill
 AFX
 AHelper
+ahicon
 ahz
 AImpl
 AInplace
@@ -65,14 +68,15 @@ ASBSET
 asdfghjkl
 ASetting
 ASingle
+ASYNCDONTCARE
 ASYNCWINDOWPOS
 atch
 ATest
-ATTRCOLOR
 aumid
 Authenticode
 AUTOBUDDY
 AUTOCHECKBOX
+autocrlf
 autohide
 AUTOHSCROLL
 automagically
@@ -89,8 +93,9 @@ backgrounding
 backported
 backstory
 barbaz
-Batang
 Bazz
+bbb
+bbccb
 BBDM
 bbwe
 bcount
@@ -120,8 +125,6 @@ Blt
 BLUESCROLL
 BODGY
 BOLDFONT
-BOOLIFY
-bools
 Borland
 boutput
 boxheader
@@ -152,7 +155,6 @@ cazamor
 CBash
 cbiex
 CBN
-CBoolean
 cbt
 CCCBB
 cch
@@ -160,12 +162,9 @@ CCHAR
 CCmd
 ccolor
 CCom
-CComp
 CConsole
-CConversion
 CCRT
 cdd
-CEdit
 CELLSIZE
 cfae
 cfie
@@ -175,19 +174,17 @@ CFuzz
 cgscrn
 chafa
 changelists
-chaof
 charinfo
 CHARSETINFO
-chcbpat
 chh
 chshdng
 CHT
-Cic
 CLASSSTRING
 CLE
 cleartype
 CLICKACTIVE
 clickdown
+CLIENTID
 clipbrd
 CLIPCHILDREN
 CLIPSIBLINGS
@@ -196,7 +193,6 @@ cloudconsole
 cloudvault
 CLSCTX
 clsids
-CLUSTERMAP
 cmatrix
 cmder
 CMDEXT
@@ -212,7 +208,6 @@ codepages
 codepath
 coinit
 colorizing
-COLORMATRIX
 COLORREFs
 colorschemes
 colorspec
@@ -220,7 +215,6 @@ colortable
 colortbl
 colortest
 colortool
-COLR
 combaseapi
 comctl
 commandline
@@ -229,7 +223,6 @@ commdlg
 COMMITID
 componentization
 conapi
-conareainfo
 conattrs
 conbufferout
 concfg
@@ -240,8 +233,7 @@ condrv
 conechokey
 conemu
 conhost
-conime
-conimeinfo
+CONIME
 conintegrity
 conintegrityuwp
 coninteractivitybase
@@ -253,6 +245,7 @@ CONKBD
 conlibk
 conmsgl
 CONNECTINFO
+connyection
 CONOUT
 conprops
 conpropsp
@@ -279,7 +272,6 @@ contentfiles
 conterm
 contsf
 contypes
-convarea
 conwinuserrefs
 coordnew
 COPYCOLOR
@@ -314,7 +306,6 @@ csrutil
 CSTYLE
 CSwitch
 CTerminal
-CText
 ctl
 ctlseqs
 CTRLEVENT
@@ -322,7 +313,7 @@ CTRLFREQUENCY
 CTRLKEYSHORTCUTS
 Ctrls
 CTRLVOLUME
-Ctxt
+CUAS
 CUF
 cupxy
 CURRENTFONT
@@ -365,11 +356,9 @@ DBGFONTS
 DBGOUTPUT
 dbh
 dblclk
-DBlob
 DColor
 DCOLORVALUE
 dcommon
-dcompile
 dcompiler
 DComposition
 dde
@@ -429,6 +418,7 @@ DECRQM
 DECRQPSR
 DECRQSS
 DECRQTSR
+DECRQUPSS
 DECRSPS
 decrst
 DECSACE
@@ -451,6 +441,7 @@ DECSTBM
 DECSTGLT
 DECSTR
 DECSWL
+DECSWT
 DECTABSR
 DECTCEM
 DECXCPR
@@ -475,7 +466,6 @@ depersist
 deprioritized
 deserializers
 desktopwindowxamlsource
-DESTINATIONNAME
 devicecode
 Dext
 DFactory
@@ -487,7 +477,6 @@ DISABLEDELAYEDEXPANSION
 DISABLENOSCROLL
 DISPATCHNOTIFY
 DISPLAYATTRIBUTE
-DISPLAYATTRIBUTEPROPERTY
 DISPLAYCHANGE
 distros
 dlg
@@ -535,7 +524,6 @@ DWORDs
 dwrite
 dxgi
 dxgidwm
-dxguid
 dxinterop
 dxsm
 dxttbmp
@@ -564,7 +552,6 @@ entrypoints
 ENU
 ENUMLOGFONT
 ENUMLOGFONTEX
-enumranges
 EOK
 EPres
 EQU
@@ -602,8 +589,9 @@ FECF
 FEEF
 fesb
 FFAF
+ffd
 FFDE
-FFrom
+FFFDb
 fgbg
 FGCOLOR
 FGHIJ
@@ -622,7 +610,6 @@ FINDDOWN
 FINDSTRINGEXACT
 FINDUP
 FIter
-FIXEDCONVERTED
 FIXEDFILEINFO
 Flg
 flyouts
@@ -715,7 +702,6 @@ GETWAITTOKILLTIMEOUT
 GETWHEELSCROLLCHARACTERS
 GETWHEELSCROLLCHARS
 GETWHEELSCROLLLINES
-GFEh
 Gfun
 gfx
 GGI
@@ -738,9 +724,8 @@ Greyscale
 gridline
 gset
 gsl
-GTP
 guc
-guidatom
+GUIDATOM
 GValue
 GWL
 GWLP
@@ -763,6 +748,7 @@ hdr
 HDROP
 hdrstop
 HEIGHTSCROLL
+hfind
 hfont
 hfontresource
 hglobal
@@ -838,11 +824,13 @@ IEnd
 IEnum
 IFACEMETHODIMP
 ification
-IGNOREEND
 IGNORELANGUAGE
 IHosted
 iid
 IIo
+ILC
+ILCo
+ILD
 ime
 IMPEXP
 inbox
@@ -859,8 +847,6 @@ inkscape
 INLINEPREFIX
 inproc
 Inputkeyinfo
-INPUTPROCESSORPROFILE
-inputrc
 Inputreadhandledata
 INSERTMODE
 INTERACTIVITYBASE
@@ -872,9 +858,7 @@ INVALIDARG
 INVALIDATERECT
 Ioctl
 ipch
-ipp
 IProperty
-IPSINK
 ipsp
 IShell
 ISwap
@@ -894,17 +878,12 @@ JOBOBJECT
 JOBOBJECTINFOCLASS
 JPN
 jsoncpp
-Jsons
 jsprovider
 jumplist
 KAttrs
 kawa
 Kazu
 kazum
-kcub
-kcud
-kcuf
-kcuu
 kernelbase
 kernelbasestaging
 KEYBDINPUT
@@ -916,7 +895,6 @@ Keymapping
 keyscan
 keystate
 keyups
-khome
 KILLACTIVE
 KILLFOCUS
 kinda
@@ -929,6 +907,7 @@ KLMNOPQRSTY
 KOK
 KPRIORITY
 KVM
+kyouhaishaheiku
 langid
 LANGUAGELIST
 lasterror
@@ -991,7 +970,6 @@ lpdw
 lpelfe
 lpfn
 LPFNADDPROPSHEETPAGE
-lpl
 LPMEASUREITEMSTRUCT
 LPMINMAXINFO
 lpmsg
@@ -1054,7 +1032,6 @@ MBUTTON
 MBUTTONDBLCLK
 MBUTTONDOWN
 MBUTTONUP
-Mbxy
 mdmerge
 MDs
 MEASUREITEM
@@ -1068,6 +1045,7 @@ MENUITEMINFO
 MENUSELECT
 messageext
 metaproj
+Mgrs
 microsoftpublicsymbols
 midl
 mii
@@ -1079,7 +1057,6 @@ minkernel
 MINMAXINFO
 minwin
 minwindef
-Mip
 MMBB
 mmcc
 MMCPL
@@ -1116,14 +1093,13 @@ msix
 msrc
 MSVCRTD
 MTSM
-munges
 Munged
+munges
 murmurhash
 muxes
 myapplet
 mybranch
 mydir
-MYMAX
 Mypair
 Myval
 NAMELENGTH
@@ -1166,6 +1142,8 @@ NOCONTEXTHELP
 NOCOPYBITS
 NODUP
 noexcepts
+NOFONT
+NOHIDDENTEXT
 NOINTEGRALHEIGHT
 NOINTERFACE
 NOLINKINFO
@@ -1189,6 +1167,7 @@ NORMALDISPLAY
 NOSCRATCH
 NOSEARCH
 noselect
+NOSELECTION
 NOSENDCHANGING
 NOSIZE
 NOSNAPSHOT
@@ -1214,7 +1193,6 @@ ntdll
 ntifs
 ntlpcapi
 ntm
-nto
 ntrtl
 ntstatus
 NTSYSCALLAPI
@@ -1280,6 +1258,7 @@ packageuwp
 PACKAGEVERSIONNUMBER
 PACKCOORD
 PACKVERSION
+pacp
 pagedown
 pageup
 PAINTPARAMS
@@ -1290,9 +1269,7 @@ parentable
 parms
 PATCOPY
 pathcch
-Pathto
 PATTERNID
-pcat
 pcb
 pcch
 PCCHAR
@@ -1316,9 +1293,9 @@ PCSTR
 PCWCH
 PCWCHAR
 PCWSTR
-pda
 pdbs
 pdbstr
+pdcs
 PDPs
 pdtobj
 pdw
@@ -1340,11 +1317,15 @@ pgomgr
 PGONu
 pguid
 phhook
+phico
+phicon
 phwnd
 pidl
 PIDLIST
 pids
 pii
+piml
+pimpl
 pinvoke
 pipename
 pipestr
@@ -1376,7 +1357,6 @@ POSXSCROLL
 POSYSCROLL
 PPEB
 ppf
-ppguid
 ppidl
 PPROC
 ppropvar
@@ -1406,7 +1386,7 @@ PROCESSINFOCLASS
 PRODEXT
 PROPERTYID
 PROPERTYKEY
-PROPERTYVAL
+propertyval
 propsheet
 PROPSHEETHEADER
 PROPSHEETPAGE
@@ -1438,15 +1418,17 @@ ptch
 ptsz
 PTYIn
 PUCHAR
+pvar
 pwch
 PWDDMCONSOLECONTEXT
+Pwease
+pweview
 pws
 pwstr
 pwsz
 pythonw
 Qaabbcc
 QUERYOPEN
-QUESTIONMARK
 quickedit
 QUZ
 QWER
@@ -1479,8 +1461,6 @@ READCONSOLE
 READCONSOLEOUTPUT
 READCONSOLEOUTPUTSTRING
 READMODE
-reallocs
-reamapping
 rectread
 redef
 redefinable
@@ -1508,7 +1488,6 @@ repositorypath
 Requiresx
 rerasterize
 rescap
-Resequence
 RESETCONTENT
 resheader
 resmimetype
@@ -1527,6 +1506,7 @@ rgn
 rgp
 rgpwsz
 rgrc
+rguid
 rgw
 RIGHTALIGN
 RIGHTBUTTON
@@ -1534,6 +1514,7 @@ riid
 RIS
 roadmap
 robomac
+rodata
 rosetta
 RRF
 rrr
@@ -1541,7 +1522,6 @@ RRRGGGBB
 rsas
 rtcore
 RTEXT
-RTFTo
 RTLREADING
 Rtn
 ruleset
@@ -1657,7 +1637,6 @@ sidebyside
 SIF
 SIGDN
 Signtool
-SINGLEFLAG
 SINGLETHREADED
 siup
 sixel
@@ -1676,6 +1655,8 @@ slpit
 SManifest
 SMARTQUOTE
 SMTO
+snapcx
+snapcy
 SOLIDBOX
 Solutiondir
 somefile
@@ -1687,7 +1668,6 @@ srcsrv
 SRCSRVTRG
 srctool
 srect
-srv
 srvinit
 srvpipe
 ssa
@@ -1719,7 +1699,6 @@ SUA
 subcompartment
 subkeys
 SUBLANG
-subresource
 subsystemconsole
 subsystemwindows
 swapchain
@@ -1730,6 +1709,7 @@ SYMED
 SYNCPAINT
 syscalls
 SYSCHAR
+SYSCOLOR
 SYSCOMMAND
 SYSDEADCHAR
 SYSKEYDOWN
@@ -1741,6 +1721,7 @@ sysparams
 sysparamsext
 SYSTEMHAND
 SYSTEMMENU
+SYSTEMTIME
 tabview
 TAdd
 taef
@@ -1795,7 +1776,6 @@ TEXTMETRIC
 TEXTMETRICW
 textmode
 texttests
-TFCAT
 TFunction
 THUMBPOSITION
 THUMBTRACK
@@ -1823,18 +1803,15 @@ tosign
 touchpad
 Tpp
 Tpqrst
-tracelog
 tracelogging
 traceviewpp
 trackbar
-TRACKCOMPOSITION
 trackpad
 transitioning
 Trd
 TREX
 triaged
 triaging
-TRIANGLESTRIP
 Tribool
 TRIMZEROHEADINGS
 trx
@@ -1852,8 +1829,6 @@ TTM
 TTo
 tvpp
 tvtseq
-Txtev
-typechecked
 TYUI
 UAC
 uap
@@ -1871,13 +1846,11 @@ UIACCESS
 uiacore
 uiautomationcore
 uielem
-UIELEMENTENABLEDONLY
 UINTs
 ul
-ulcch
 uld
-uldb
 uldash
+uldb
 ulwave
 Unadvise
 unattend
@@ -1888,7 +1861,6 @@ unhosted
 UNICODETEXT
 UNICRT
 Unintense
-Uniscribe
 unittesting
 unittests
 unk
@@ -1900,7 +1872,7 @@ untextured
 UPDATEDISPLAY
 UPDOWN
 UPKEY
-UPSS
+upss
 uregex
 URegular
 usebackq
@@ -1929,6 +1901,7 @@ UVWXY
 UVWXYZ
 uwa
 uwp
+uwu
 uxtheme
 Vanara
 vararg
@@ -1969,7 +1942,6 @@ vstest
 VSTS
 VSTT
 vswhere
-vtapi
 vtapp
 VTE
 VTID
@@ -1983,7 +1955,6 @@ VTRGBTo
 vtseq
 vtterm
 vttest
-waitable
 WANSUNG
 WANTARROWS
 WANTTAB
@@ -2004,6 +1975,7 @@ wdm
 webpage
 websites
 wekyb
+wewoad
 wex
 wextest
 wextestclass
@@ -2033,7 +2005,6 @@ WINDOWALPHA
 windowdpiapi
 WINDOWEDGE
 windowext
-windowime
 WINDOWINFO
 windowio
 windowmetrics
@@ -2084,7 +2055,6 @@ WNDCLASSW
 Wndproc
 WNegative
 WNull
-wnwb
 workarea
 WOutside
 WOWARM
@@ -2108,7 +2078,6 @@ wrkstr
 wrl
 wrp
 WRunoff
-WScript
 wsl
 WSLENV
 wstr
@@ -2124,7 +2093,6 @@ WTs
 WTSOFTFONT
 wtw
 wtypes
-Wubi
 WUX
 WVerify
 WWith
@@ -2143,22 +2111,17 @@ XBUTTONDOWN
 XBUTTONUP
 XCast
 XCENTER
-XColors
 xcopy
 XCount
 xdy
 XEncoding
 xes
-xff
 XFG
 XFile
 XFORM
-xin
-xinchaof
-xinxinchaof
+XIn
 XManifest
 XMath
-XMFLOAT
 xorg
 XResource
 xsi
