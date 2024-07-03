@@ -4,18 +4,11 @@
 
 #include "pch.h"
 #include "TerminalPage.h"
-#include "TerminalPage.g.cpp"
-#include "RenameWindowRequestedArgs.g.cpp"
-#include "RequestMoveContentArgs.g.cpp"
-#include "RequestReceiveContentArgs.g.cpp"
-#include "LaunchPositionRequest.g.cpp"
 
-#include <filesystem>
-
-#include <inc/WindowingBehavior.h>
 #include <LibraryResources.h>
 #include <TerminalCore/ControlKeyStates.hpp>
 #include <til/latch.h>
+#include <Utils.h>
 
 #include "../../types/inc/utils.hpp"
 #include "App.h"
@@ -24,7 +17,12 @@
 #include "SettingsPaneContent.h"
 #include "ScratchpadContent.h"
 #include "TabRowControl.h"
-#include "Utils.h"
+
+#include "TerminalPage.g.cpp"
+#include "RenameWindowRequestedArgs.g.cpp"
+#include "RequestMoveContentArgs.g.cpp"
+#include "RequestReceiveContentArgs.g.cpp"
+#include "LaunchPositionRequest.g.cpp"
 
 using namespace winrt;
 using namespace winrt::Microsoft::Terminal::Control;
@@ -123,7 +121,6 @@ namespace winrt::TerminalApp::implementation
         // to happen before the Settings UI is reloaded and tries to re-read those values.
         if (const auto p = CommandPaletteElement())
         {
-            p.SetCommands(_settings.GlobalSettings().ActionMap().ExpandedCommands());
             p.SetActionMap(_settings.ActionMap());
         }
 
@@ -826,7 +823,7 @@ namespace winrt::TerminalApp::implementation
             newTabFlyout.Items().Append(settingsItem);
 
             auto actionMap = _settings.ActionMap();
-            const auto settingsKeyChord{ actionMap.GetKeyBindingForAction(ShortcutAction::OpenSettings, OpenSettingsArgs{ SettingsTarget::SettingsUI }) };
+            const auto settingsKeyChord{ actionMap.GetKeyBindingForAction(L"Terminal.OpenSettingsUI") };
             if (settingsKeyChord)
             {
                 _SetAcceleratorForMenuItem(settingsItem, settingsKeyChord);
@@ -848,7 +845,7 @@ namespace winrt::TerminalApp::implementation
             commandPaletteFlyout.Click({ this, &TerminalPage::_CommandPaletteButtonOnClick });
             newTabFlyout.Items().Append(commandPaletteFlyout);
 
-            const auto commandPaletteKeyChord{ actionMap.GetKeyBindingForAction(ShortcutAction::ToggleCommandPalette) };
+            const auto commandPaletteKeyChord{ actionMap.GetKeyBindingForAction(L"Terminal.ToggleCommandPalette") };
             if (commandPaletteKeyChord)
             {
                 _SetAcceleratorForMenuItem(commandPaletteFlyout, commandPaletteKeyChord);
@@ -1005,6 +1002,18 @@ namespace winrt::TerminalApp::implementation
                 items.push_back(profileItem);
                 break;
             }
+            case NewTabMenuEntryType::Action:
+            {
+                const auto actionEntry = entry.as<ActionEntry>();
+                const auto actionId = actionEntry.ActionId();
+                if (_settings.ActionMap().GetActionByID(actionId))
+                {
+                    auto actionItem = _CreateNewTabFlyoutAction(actionId);
+                    items.push_back(actionItem);
+                }
+
+                break;
+            }
             }
         }
 
@@ -1023,7 +1032,8 @@ namespace winrt::TerminalApp::implementation
         // NewTab(ProfileIndex=N) action
         NewTerminalArgs newTerminalArgs{ profileIndex };
         NewTabArgs newTabArgs{ newTerminalArgs };
-        auto profileKeyChord{ _settings.ActionMap().GetKeyBindingForAction(ShortcutAction::NewTab, newTabArgs) };
+        const auto id = fmt::format(FMT_COMPILE(L"Terminal.OpenNewTabProfile{}"), profileIndex);
+        const auto profileKeyChord{ _settings.ActionMap().GetKeyBindingForAction(id) };
 
         // make sure we find one to display
         if (profileKeyChord)
@@ -1092,6 +1102,41 @@ namespace winrt::TerminalApp::implementation
         });
 
         return profileMenuItem;
+    }
+
+    // Method Description:
+    // - This method creates a flyout menu item for a given action
+    //   It makes sure to set the correct icon, keybinding, and click-action.
+    WUX::Controls::MenuFlyoutItem TerminalPage::_CreateNewTabFlyoutAction(const winrt::hstring& actionId)
+    {
+        auto actionMenuItem = WUX::Controls::MenuFlyoutItem{};
+        const auto action{ _settings.ActionMap().GetActionByID(actionId) };
+        const auto actionKeyChord{ _settings.ActionMap().GetKeyBindingForAction(actionId) };
+
+        if (actionKeyChord)
+        {
+            _SetAcceleratorForMenuItem(actionMenuItem, actionKeyChord);
+        }
+
+        actionMenuItem.Text(action.Name());
+
+        // If there's an icon set for this action, set it as the icon for
+        // this flyout item
+        const auto& iconPath = action.IconPath();
+        if (!iconPath.empty())
+        {
+            const auto icon = _CreateNewTabFlyoutIcon(iconPath);
+            actionMenuItem.Icon(icon);
+        }
+
+        actionMenuItem.Click([action, weakThis{ get_weak() }](auto&&, auto&&) {
+            if (auto page{ weakThis.get() })
+            {
+                page->_actionDispatch->DoAction(action.ActionAndArgs());
+            }
+        });
+
+        return actionMenuItem;
     }
 
     // Method Description:
@@ -1211,6 +1256,20 @@ namespace winrt::TerminalApp::implementation
                                                                                         TerminalSettings settings,
                                                                                         const bool inheritCursor)
     {
+        static const auto textMeasurement = [&]() -> std::wstring_view {
+            switch (_settings.GlobalSettings().TextMeasurement())
+            {
+            case TextMeasurement::Graphemes:
+                return L"graphemes";
+            case TextMeasurement::Wcswidth:
+                return L"wcswidth";
+            case TextMeasurement::Console:
+                return L"console";
+            default:
+                return {};
+            }
+        }();
+
         TerminalConnection::ITerminalConnection connection{ nullptr };
 
         auto connectionType = profile.ConnectionType();
@@ -1280,6 +1339,11 @@ namespace winrt::TerminalApp::implementation
             {
                 valueSet.Insert(L"inheritCursor", Windows::Foundation::PropertyValue::CreateBoolean(true));
             }
+        }
+
+        if (!textMeasurement.empty())
+        {
+            valueSet.Insert(L"textMeasurement", Windows::Foundation::PropertyValue::CreateString(textMeasurement));
         }
 
         if (const auto id = settings.SessionId(); id != winrt::guid{})
@@ -1671,6 +1735,8 @@ namespace winrt::TerminalApp::implementation
 
         term.ShowWindowChanged({ get_weak(), &TerminalPage::_ShowWindowChangedHandler });
 
+        term.SearchMissingCommand({ get_weak(), &TerminalPage::_SearchMissingCommandHandler });
+
         // Don't even register for the event if the feature is compiled off.
         if constexpr (Feature_ShellCompletions::IsEnabled())
         {
@@ -1687,6 +1753,12 @@ namespace winrt::TerminalApp::implementation
             if (const auto& page{ weak.get() })
             {
                 page->_PopulateContextMenu(weakTerm.get(), sender.try_as<MUX::Controls::CommandBarFlyout>(), true);
+            }
+        });
+        term.QuickFixMenu().Opening([weak = get_weak(), weakTerm](auto&& sender, auto&& /*args*/) {
+            if (const auto& page{ weak.get() })
+            {
+                page->_PopulateQuickFixMenu(weakTerm.get(), sender.try_as<Controls::MenuFlyout>());
             }
         });
     }
@@ -1827,7 +1899,6 @@ namespace winrt::TerminalApp::implementation
     {
         const auto p = FindName(L"CommandPaletteElement").as<CommandPalette>();
 
-        p.SetCommands(_settings.GlobalSettings().ActionMap().ExpandedCommands());
         p.SetActionMap(_settings.ActionMap());
 
         // When the visibility of the command palette changes to "collapsed",
@@ -2235,6 +2306,29 @@ namespace winrt::TerminalApp::implementation
         }
 
         return true;
+    }
+
+    // When the tab's active pane changes, we'll want to lookup a new icon
+    // for it. The Title change will be propagated upwards through the tab's
+    // PropertyChanged event handler.
+    void TerminalPage::_activePaneChanged(winrt::TerminalApp::TerminalTab sender,
+                                          Windows::Foundation::IInspectable args)
+    {
+        if (const auto tab{ _GetTerminalTabImpl(sender) })
+        {
+            // Possibly update the icon of the tab.
+            _UpdateTabIcon(*tab);
+
+            _updateThemeColors();
+
+            // Update the taskbar progress as well. We'll raise our own
+            // SetTaskbarProgress event here, to get tell the hosting
+            // application to re-query this value from us.
+            SetTaskbarProgress.raise(*this, nullptr);
+
+            auto profile = tab->GetFocusedProfile();
+            _UpdateBackground(profile);
+        }
     }
 
     uint32_t TerminalPage::NumberOfTabs() const
@@ -2899,6 +2993,30 @@ namespace winrt::TerminalApp::implementation
         ShowWindowChanged.raise(*this, args);
     }
 
+    winrt::fire_and_forget TerminalPage::_SearchMissingCommandHandler(const IInspectable /*sender*/, const Microsoft::Terminal::Control::SearchMissingCommandEventArgs args)
+    {
+        assert(!Dispatcher().HasThreadAccess());
+
+        if (!Feature_QuickFix::IsEnabled())
+        {
+            co_return;
+        }
+
+        std::vector<hstring> suggestions;
+        suggestions.reserve(1);
+        suggestions.emplace_back(fmt::format(FMT_COMPILE(L"winget install {}"), args.MissingCommand()));
+
+        co_await wil::resume_foreground(Dispatcher());
+
+        auto term = _GetActiveControl();
+        if (!term)
+        {
+            co_return;
+        }
+        term.UpdateWinGetSuggestions(single_threaded_vector<hstring>(std::move(suggestions)));
+        term.RefreshQuickFixMenu();
+    }
+
     // Method Description:
     // - Paste text from the Windows Clipboard to the focused terminal
     void TerminalPage::_PasteText()
@@ -2994,15 +3112,6 @@ namespace winrt::TerminalApp::implementation
 
         const auto content = _manager.CreateCore(settings.DefaultSettings(), settings.UnfocusedSettings(), connection);
         const TermControl control{ content };
-
-        if (const auto id = settings.DefaultSettings().SessionId(); id != winrt::guid{})
-        {
-            const auto settingsDir = CascadiaSettings::SettingsDirectory();
-            const auto idStr = Utils::GuidToPlainString(id);
-            const auto path = fmt::format(FMT_COMPILE(L"{}\\buffer_{}.txt"), settingsDir, idStr);
-            control.RestoreFromPath(path);
-        }
-
         return _SetupControl(control);
     }
 
@@ -3102,7 +3211,10 @@ namespace winrt::TerminalApp::implementation
             return nullptr;
         }
 
-        auto connection = existingConnection ? existingConnection : _CreateConnectionFromSettings(profile, controlSettings.DefaultSettings(), false);
+        const auto sessionId = controlSettings.DefaultSettings().SessionId();
+        const auto hasSessionId = sessionId != winrt::guid{};
+
+        auto connection = existingConnection ? existingConnection : _CreateConnectionFromSettings(profile, controlSettings.DefaultSettings(), hasSessionId);
         if (existingConnection)
         {
             connection.Resize(controlSettings.DefaultSettings().InitialRows(), controlSettings.DefaultSettings().InitialCols());
@@ -3123,6 +3235,14 @@ namespace winrt::TerminalApp::implementation
         }
 
         const auto control = _CreateNewControlAndContent(controlSettings, connection);
+
+        if (hasSessionId)
+        {
+            const auto settingsDir = CascadiaSettings::SettingsDirectory();
+            const auto idStr = Utils::GuidToPlainString(sessionId);
+            const auto path = fmt::format(FMT_COMPILE(L"{}\\buffer_{}.txt"), settingsDir, idStr);
+            control.RestoreFromPath(path);
+        }
 
         auto paneContent{ winrt::make<TerminalPaneContent>(profile, _terminalSettingsCache, control) };
 
@@ -3810,7 +3930,7 @@ namespace winrt::TerminalApp::implementation
             // recipe for disaster. We won't ever open up a tab in this window.
             newTerminalArgs.Elevate(false);
             const auto newPane = _MakePane(newTerminalArgs, nullptr, connection);
-            newPane->WalkTree([](auto pane) {
+            newPane->WalkTree([](const auto& pane) {
                 pane->FinalizeConfigurationGivenDefault();
             });
             _CreateNewTabFromPane(newPane);
@@ -4819,6 +4939,53 @@ namespace winrt::TerminalApp::implementation
         }
 
         makeItem(RS_(L"TabClose"), L"\xE711", ActionAndArgs{ ShortcutAction::CloseTab, CloseTabArgs{ _GetFocusedTabIndex().value() } });
+    }
+
+    void TerminalPage::_PopulateQuickFixMenu(const TermControl& control,
+                                             const Controls::MenuFlyout& menu)
+    {
+        if (!control || !menu)
+        {
+            return;
+        }
+
+        // Helper lambda for dispatching a SendInput ActionAndArgs onto the
+        // ShortcutActionDispatch. Used below to wire up each menu entry to the
+        // respective action. Then clear the quick fix menu.
+        auto weak = get_weak();
+        auto makeCallback = [weak](const hstring& suggestion) {
+            return [weak, suggestion](auto&&, auto&&) {
+                if (auto page{ weak.get() })
+                {
+                    const auto actionAndArgs = ActionAndArgs{ ShortcutAction::SendInput, SendInputArgs{ hstring{ L"\u0003" } + suggestion } };
+                    page->_actionDispatch->DoAction(actionAndArgs);
+                    if (auto ctrl = page->_GetActiveControl())
+                    {
+                        ctrl.ClearQuickFix();
+                    }
+                }
+            };
+        };
+
+        // Wire up each item to the action that should be performed. By actually
+        // connecting these to actions, we ensure the implementation is
+        // consistent. This also leaves room for customizing this menu with
+        // actions in the future.
+
+        menu.Items().Clear();
+        const auto quickFixes = control.CommandHistory().QuickFixes();
+        for (const auto& qf : quickFixes)
+        {
+            MenuFlyoutItem item{};
+
+            auto iconElement = UI::IconPathConverter::IconWUX(L"\ue74c");
+            Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
+            item.Icon(iconElement);
+
+            item.Text(qf);
+            item.Click(makeCallback(qf));
+            menu.Items().Append(item);
+        }
     }
 
     // Handler for our WindowProperties's PropertyChanged event. We'll use this
