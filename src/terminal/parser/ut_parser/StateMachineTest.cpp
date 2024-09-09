@@ -69,13 +69,7 @@ public:
 
     bool ActionVt52EscDispatch(const VTID /*id*/, const VTParameters /*parameters*/) override { return true; };
 
-    bool ActionClear() override { return true; };
-
-    bool ActionIgnore() override { return true; };
-
-    bool ActionOscDispatch(const wchar_t /* wch */,
-                           const size_t /* parameter */,
-                           const std::wstring_view /* string */) override
+    bool ActionOscDispatch(const size_t /* parameter */, const std::wstring_view /* string */) override
     {
         if (pfnFlushToTerminal)
         {

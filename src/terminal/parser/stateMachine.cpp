@@ -5,12 +5,13 @@
 
 #include "stateMachine.hpp"
 
+#include "../../types/inc/utils.hpp"
 #include "ascii.hpp"
 
 using namespace Microsoft::Console::VirtualTerminal;
 
 //Takes ownership of the pEngine.
-StateMachine::StateMachine(std::unique_ptr<IStateMachineEngine> engine, const bool isEngineForInput) :
+StateMachine::StateMachine(std::unique_ptr<IStateMachineEngine> engine, const bool isEngineForInput) noexcept :
     _engine(std::move(engine)),
     _isEngineForInput(isEngineForInput),
     _state(VTStates::Ground),
@@ -605,7 +606,7 @@ void StateMachine::_ActionSubParam(const wchar_t wch)
 // - wch - Character to dispatch.
 // Return Value:
 // - <none>
-void StateMachine::_ActionClear()
+void StateMachine::_ActionClear() noexcept
 {
     _trace.TraceOnAction(L"Clear");
 
@@ -624,8 +625,6 @@ void StateMachine::_ActionClear()
     _oscParameter = 0;
 
     _dcsStringHandler = nullptr;
-
-    _engine->ActionClear();
 }
 
 // Routine Description:
@@ -685,17 +684,17 @@ void StateMachine::_ActionOscPut(const wchar_t wch)
 }
 
 // Routine Description:
-// - Triggers the CsiDispatch action to indicate that the listener should handle a control sequence.
+// - Triggers the OscDispatch action to indicate that the listener should handle a control sequence.
 //   These sequences perform various API-type commands that can include many parameters.
 // Arguments:
-// - wch - Character to dispatch.
+// - <none>
 // Return Value:
 // - <none>
-void StateMachine::_ActionOscDispatch(const wchar_t wch)
+void StateMachine::_ActionOscDispatch()
 {
     _trace.TraceOnAction(L"OscDispatch");
     _trace.DispatchSequenceTrace(_SafeExecute([=]() {
-        return _engine->ActionOscDispatch(wch, _oscParameter, _oscString);
+        return _engine->ActionOscDispatch(_oscParameter, _oscString);
     }));
 }
 
@@ -727,14 +726,14 @@ void StateMachine::_ActionDcsDispatch(const wchar_t wch)
 
     const auto success = _SafeExecute([=]() {
         _dcsStringHandler = _engine->ActionDcsDispatch(_identifier.Finalize(wch), { _parameters.data(), _parameters.size() });
-        // If the returned handler is null, the sequence is not supported.
-        return _dcsStringHandler != nullptr;
+        return true;
     });
 
     // Trace the result.
     _trace.DispatchSequenceTrace(success);
 
-    if (success)
+    // If the returned handler is null, the sequence is not supported.
+    if (_dcsStringHandler)
     {
         // If successful, enter the pass through state.
         _EnterDcsPassThrough();
@@ -770,7 +769,7 @@ void StateMachine::_EnterGround() noexcept
 // - <none>
 // Return Value:
 // - <none>
-void StateMachine::_EnterEscape()
+void StateMachine::_EnterEscape() noexcept
 {
     _state = VTStates::Escape;
     _trace.TraceStateChange(L"Escape");
@@ -800,7 +799,7 @@ void StateMachine::_EnterEscapeIntermediate() noexcept
 // - <none>
 // Return Value:
 // - <none>
-void StateMachine::_EnterCsiEntry()
+void StateMachine::_EnterCsiEntry() noexcept
 {
     _state = VTStates::CsiEntry;
     _trace.TraceStateChange(L"CsiEntry");
@@ -916,7 +915,7 @@ void StateMachine::_EnterOscTermination() noexcept
 // - <none>
 // Return Value:
 // - <none>
-void StateMachine::_EnterSs3Entry()
+void StateMachine::_EnterSs3Entry() noexcept
 {
     _state = VTStates::Ss3Entry;
     _trace.TraceStateChange(L"Ss3Entry");
@@ -959,7 +958,7 @@ void StateMachine::_EnterVt52Param() noexcept
 // - <none>
 // Return Value:
 // - <none>
-void StateMachine::_EnterDcsEntry()
+void StateMachine::_EnterDcsEntry() noexcept
 {
     _state = VTStates::DcsEntry;
     _trace.TraceStateChange(L"DcsEntry");
@@ -1434,19 +1433,27 @@ void StateMachine::_EventCsiSubParam(const wchar_t wch)
 // Routine Description:
 // - Processes a character event into an Action that occurs while in the OscParam state.
 //   Events in this state will:
-//   1. Collect numeric values into an Osc Param
-//   2. Move to the OscString state on a delimiter
-//   3. Ignore everything else.
+//   1. Trigger the OSC action associated with the param on an OscTerminator
+//   2. If we see a ESC, enter the OscTermination state. We'll wait for one
+//      more character before we dispatch the (empty) string.
+//   3. Collect numeric values into an Osc Param
+//   4. Move to the OscString state on a delimiter
+//   5. Ignore everything else.
 // Arguments:
 // - wch - Character that triggered the event
 // Return Value:
 // - <none>
-void StateMachine::_EventOscParam(const wchar_t wch) noexcept
+void StateMachine::_EventOscParam(const wchar_t wch)
 {
     _trace.TraceOnEvent(L"OscParam");
     if (_isOscTerminator(wch))
     {
+        _ActionOscDispatch();
         _EnterGround();
+    }
+    else if (_isEscape(wch))
+    {
+        _EnterOscTermination();
     }
     else if (_isNumericParamValue(wch))
     {
@@ -1479,7 +1486,7 @@ void StateMachine::_EventOscString(const wchar_t wch)
     _trace.TraceOnEvent(L"OscString");
     if (_isOscTerminator(wch))
     {
-        _ActionOscDispatch(wch);
+        _ActionOscDispatch();
         _EnterGround();
     }
     else if (_isEscape(wch))
@@ -1511,7 +1518,7 @@ void StateMachine::_EventOscTermination(const wchar_t wch)
     _trace.TraceOnEvent(L"OscTermination");
     if (_isStringTerminatorIndicator(wch))
     {
-        _ActionOscDispatch(wch);
+        _ActionOscDispatch();
         _EnterGround();
     }
     else
@@ -1850,14 +1857,14 @@ void StateMachine::ProcessCharacter(const wchar_t wch)
         // code points that get translated as C1 controls when that is not their
         // intended use. In order to avoid them triggering unintentional escape
         // sequences, we ignore these characters by default.
-        if (_parserMode.any(Mode::AcceptC1, Mode::AlwaysAcceptC1))
+        if (_parserMode.test(Mode::AcceptC1))
         {
             ProcessCharacter(AsciiChars::ESC);
             ProcessCharacter(_c1To7Bit(wch));
         }
     }
-    // Don't go to escape from the OSC string state - ESC can be used to terminate OSC strings.
-    else if (_isEscape(wch) && _state != VTStates::OscString)
+    // Don't go to escape from the OSC string/param states - ESC can be used to terminate OSC strings.
+    else if (_isEscape(wch) && _state != VTStates::OscString && _state != VTStates::OscParam)
     {
         _ActionInterrupt();
         _EnterEscape();
@@ -1954,119 +1961,6 @@ bool StateMachine::FlushToTerminal()
     return success;
 }
 
-// Disable vectorization-unfriendly warnings.
-#pragma warning(push)
-#pragma warning(disable : 26429) // Symbol '...' is never tested for nullness, it can be marked as not_null (f.23).
-#pragma warning(disable : 26472) // Don't use a static_cast for arithmetic conversions. Use brace initialization, gsl::narrow_cast or gsl::narrow (type.1).
-#pragma warning(disable : 26481) // Don't use pointer arithmetic. Use span instead (bounds.1).
-#pragma warning(disable : 26490) // Don't use reinterpret_cast (type.1).
-
-// Returns true for C0 characters and C1 [single-character] CSI.
-constexpr bool isActionableFromGround(const wchar_t wch) noexcept
-{
-    // This is equivalent to:
-    //   return (wch <= 0x1f) || (wch >= 0x7f && wch <= 0x9f);
-    // It's written like this to get MSVC to emit optimal assembly for findActionableFromGround.
-    // It lacks the ability to turn boolean operators into binary operations and also happens
-    // to fail to optimize the printable-ASCII range check into a subtraction & comparison.
-    return (wch <= 0x1f) | (static_cast<wchar_t>(wch - 0x7f) <= 0x20);
-}
-
-[[msvc::forceinline]] static size_t findActionableFromGroundPlain(const wchar_t* beg, const wchar_t* end, const wchar_t* it) noexcept
-{
-#pragma loop(no_vector)
-    for (; it < end && !isActionableFromGround(*it); ++it)
-    {
-    }
-    return it - beg;
-}
-
-static size_t findActionableFromGround(const wchar_t* data, size_t count) noexcept
-{
-    // The following vectorized code replicates isActionableFromGround which is equivalent to:
-    //   (wch <= 0x1f) || (wch >= 0x7f && wch <= 0x9f)
-    // or rather its more machine friendly equivalent:
-    //   (wch <= 0x1f) | ((wch - 0x7f) <= 0x20)
-#if defined(TIL_SSE_INTRINSICS)
-
-    auto it = data;
-
-    for (const auto end = data + (count & ~size_t{ 7 }); it < end; it += 8)
-    {
-        const auto wch = _mm_loadu_si128(reinterpret_cast<const __m128i*>(it));
-        const auto z = _mm_setzero_si128();
-
-        // Dealing with unsigned numbers in SSE2 is annoying because it has poor support for that.
-        // We'll use subtractions with saturation ("SubS") to work around that. A check like
-        // a < b can be implemented as "max(0, a - b) == 0" and "max(0, a - b)" is what "SubS" is.
-
-        // Check for (wch < 0x20)
-        auto a = _mm_subs_epu16(wch, _mm_set1_epi16(0x1f));
-        // Check for "((wch - 0x7f) <= 0x20)" by adding 0x10000-0x7f, which overflows to a
-        // negative number if "wch >= 0x7f" and then subtracting 0x9f-0x7f with saturation to an
-        // unsigned number (= can't go lower than 0), which results in all numbers up to 0x9f to be 0.
-        auto b = _mm_subs_epu16(_mm_add_epi16(wch, _mm_set1_epi16(static_cast<short>(0xff81))), _mm_set1_epi16(0x20));
-        a = _mm_cmpeq_epi16(a, z);
-        b = _mm_cmpeq_epi16(b, z);
-
-        const auto c = _mm_or_si128(a, b);
-        const auto mask = _mm_movemask_epi8(c);
-
-        if (mask)
-        {
-            unsigned long offset;
-            _BitScanForward(&offset, mask);
-            it += offset / 2;
-            return it - data;
-        }
-    }
-
-    return findActionableFromGroundPlain(data, data + count, it);
-
-#elif defined(TIL_ARM_NEON_INTRINSICS)
-
-    auto it = data;
-    uint64_t mask;
-
-    for (const auto end = data + (count & ~size_t{ 7 }); it < end;)
-    {
-        const auto wch = vld1q_u16(it);
-        const auto a = vcleq_u16(wch, vdupq_n_u16(0x1f));
-        const auto b = vcleq_u16(vsubq_u16(wch, vdupq_n_u16(0x7f)), vdupq_n_u16(0x20));
-        const auto c = vorrq_u16(a, b);
-
-        mask = vgetq_lane_u64(c, 0);
-        if (mask)
-        {
-            goto exitWithMask;
-        }
-        it += 4;
-
-        mask = vgetq_lane_u64(c, 1);
-        if (mask)
-        {
-            goto exitWithMask;
-        }
-        it += 4;
-    }
-
-    return findActionableFromGroundPlain(data, data + count, it);
-
-exitWithMask:
-    unsigned long offset;
-    _BitScanForward64(&offset, mask);
-    it += offset / 16;
-    return it - data;
-
-#else
-
-    return findActionableFromGroundPlain(data, data + count, p);
-
-#endif
-}
-
-#pragma warning(pop)
-
 // Routine Description:
 // - Helper for entry to the state machine. Will take an array of characters
 //     and print as many as it can without encountering a character indicating
@@ -2082,6 +1976,7 @@ void StateMachine::ProcessString(const std::wstring_view string)
     _currentString = string;
     _runOffset = 0;
     _runSize = 0;
+    _injections.clear();
 
     if (_state != VTStates::Ground)
     {
@@ -2093,10 +1988,14 @@ void StateMachine::ProcessString(const std::wstring_view string)
     while (i < string.size())
     {
         {
-            _runOffset = i;
             // Pointer arithmetic is perfectly fine for our hot path.
 #pragma warning(suppress : 26481) // Don't use pointer arithmetic. Use span instead (bounds.1).)
-            _runSize = findActionableFromGround(string.data() + i, string.size() - i);
+            const auto beg = string.data() + i;
+            const auto len = string.size() - i;
+            const auto it = Microsoft::Console::Utils::FindActionableControlCharacter(beg, len);
+
+            _runOffset = i;
+            _runSize = it - beg;
 
             if (_runSize)
             {
@@ -2128,6 +2027,7 @@ void StateMachine::ProcessString(const std::wstring_view string)
     if (_state != VTStates::Ground)
     {
         const auto run = _CurrentRun();
+        auto cacheUnusedRun = true;
 
         // One of the "weird things" in VT input is the case of something like
         // <kbd>alt+[</kbd>. In VT, that's encoded as `\x1b[`. However, that's
@@ -2165,15 +2065,22 @@ void StateMachine::ProcessString(const std::wstring_view string)
                     _ActionEscDispatch(run.back());
                 }
                 _EnterGround();
+                // No need to cache the run, since we've dealt with it now.
+                cacheUnusedRun = false;
             }
         }
-        else if (_state != VTStates::SosPmApcString && _state != VTStates::DcsPassThrough && _state != VTStates::DcsIgnore)
+        else if (_state == VTStates::SosPmApcString || _state == VTStates::DcsPassThrough || _state == VTStates::DcsIgnore)
         {
-            // If the engine doesn't require flushing at the end of the string, we
-            // want to cache the partial sequence in case we have to flush the whole
-            // thing to the terminal later. There is no need to do this if we've
-            // reached one of the string processing states, though, since that data
+            // There is no need to cache the run if we've reached one of the
+            // string processing states in the output engine, since that data
             // will be dealt with as soon as it is received.
+            cacheUnusedRun = false;
+        }
+
+        // If the run hasn't been dealt with in one of the cases above, we cache
+        // the partial sequence in case we have to flush the whole thing later.
+        if (cacheUnusedRun)
+        {
             if (!_cachedSequence)
             {
                 _cachedSequence.emplace(std::wstring{});
@@ -2196,6 +2103,16 @@ void StateMachine::ProcessString(const std::wstring_view string)
 bool StateMachine::IsProcessingLastCharacter() const noexcept
 {
     return _processingLastCharacter;
+}
+
+void StateMachine::InjectSequence(const InjectionType type)
+{
+    _injections.emplace_back(type, _runOffset + _runSize);
+}
+
+const til::small_vector<Injection, 8>& StateMachine::GetInjections() const noexcept
+{
+    return _injections;
 }
 
 // Routine Description:
@@ -2250,11 +2167,13 @@ template<typename TLambda>
 bool StateMachine::_SafeExecute(TLambda&& lambda)
 try
 {
-    return lambda();
-}
-catch (const ShutdownException&)
-{
-    throw;
+    const auto ok = lambda();
+    static_assert(std::is_same_v<decltype(ok), const bool>, "lambda must return bool");
+    if (!ok)
+    {
+        FlushToTerminal();
+    }
+    return ok;
 }
 catch (...)
 {

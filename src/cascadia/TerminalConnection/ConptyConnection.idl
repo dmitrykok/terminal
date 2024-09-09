@@ -10,11 +10,11 @@ namespace Microsoft.Terminal.TerminalConnection
     [default_interface] runtimeclass ConptyConnection : ITerminalConnection
     {
         ConptyConnection();
-        Guid Guid { get; };
         String Commandline { get; };
         String StartingTitle { get; };
         UInt16 ShowWindow { get; };
 
+        void ResetSize();
         void ClearBuffer();
 
         void ShowHide(Boolean show);

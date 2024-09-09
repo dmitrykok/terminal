@@ -209,6 +209,7 @@ void AppCommandlineArgs::_buildParser()
     _buildMovePaneParser();
     _buildSwapPaneParser();
     _buildFocusPaneParser();
+    _buildSaveSnippetParser();
 }
 
 // Method Description:
@@ -537,6 +538,72 @@ void AppCommandlineArgs::_buildFocusPaneParser()
     setupSubcommand(_focusPaneShort);
 }
 
+void AppCommandlineArgs::_buildSaveSnippetParser()
+{
+    _saveCommand = _app.add_subcommand("x-save", RS_A(L"SaveSnippetDesc"));
+
+    auto setupSubcommand = [this](auto* subcommand) {
+        subcommand->add_option("--name,-n", _saveInputName, RS_A(L"SaveSnippetArgDesc"));
+        subcommand->add_option("--keychord,-k", _keyChordOption, RS_A(L"KeyChordArgDesc"));
+        subcommand->add_option("command,", _commandline, RS_A(L"CmdCommandArgDesc"));
+        subcommand->positionals_at_end(true);
+
+        // When ParseCommand is called, if this subcommand was provided, this
+        // callback function will be triggered on the same thread. We can be sure
+        // that `this` will still be safe - this function just lets us know this
+        // command was parsed.
+        subcommand->callback([&, this]() {
+            // Build the action from the values we've parsed on the commandline.
+            ActionAndArgs saveSnippet{};
+            saveSnippet.Action(ShortcutAction::SaveSnippet);
+            // First, parse out the commandline in the same way that
+            // _getNewTerminalArgs does it
+            SaveSnippetArgs args{};
+
+            if (!_commandline.empty())
+            {
+                std::ostringstream cmdlineBuffer;
+
+                for (const auto& arg : _commandline)
+                {
+                    if (cmdlineBuffer.tellp() != 0)
+                    {
+                        // If there's already something in here, prepend a space
+                        cmdlineBuffer << ' ';
+                    }
+
+                    if (arg.find(" ") != std::string::npos)
+                    {
+                        cmdlineBuffer << '"' << arg << '"';
+                    }
+                    else
+                    {
+                        cmdlineBuffer << arg;
+                    }
+                }
+
+                args.Commandline(winrt::to_hstring(cmdlineBuffer.str()));
+            }
+
+            if (!_keyChordOption.empty())
+            {
+                args.KeyChord(winrt::to_hstring(_keyChordOption));
+            }
+
+            if (!_saveInputName.empty())
+            {
+                winrt::hstring hString = winrt::to_hstring(_saveInputName);
+                args.Name(hString);
+            }
+
+            saveSnippet.Args(args);
+            _startupActions.push_back(saveSnippet);
+        });
+    };
+
+    setupSubcommand(_saveCommand);
+}
+
 // Method Description:
 // - Add the `NewTerminalArgs` parameters to the given subcommand. This enables
 //   that subcommand to support all the properties in a NewTerminalArgs.
@@ -549,6 +616,9 @@ void AppCommandlineArgs::_addNewTerminalArgs(AppCommandlineArgs::NewTerminalSubc
     subcommand.profileNameOption = subcommand.subcommand->add_option("-p,--profile",
                                                                      _profileName,
                                                                      RS_A(L"CmdProfileArgDesc"));
+    subcommand.sessionIdOption = subcommand.subcommand->add_option("--sessionId",
+                                                                   _sessionId,
+                                                                   RS_A(L"CmdSessionIdArgDesc"));
     subcommand.startingDirectoryOption = subcommand.subcommand->add_option("-d,--startingDirectory",
                                                                            _startingDirectory,
                                                                            RS_A(L"CmdStartingDirArgDesc"));
@@ -628,6 +698,13 @@ NewTerminalArgs AppCommandlineArgs::_getNewTerminalArgs(AppCommandlineArgs::NewT
         args.Profile(winrt::to_hstring(_profileName));
     }
 
+    if (*subcommand.sessionIdOption)
+    {
+        const auto str = winrt::to_hstring(_sessionId);
+        const auto id = ::Microsoft::Console::Utils::GuidFromString(str.c_str());
+        args.SessionId(id);
+    }
+
     if (*subcommand.startingDirectoryOption)
     {
         args.StartingDirectory(winrt::to_hstring(_startingDirectory));
@@ -700,7 +777,8 @@ bool AppCommandlineArgs::_noCommandsProvided()
              *_focusPaneCommand ||
              *_focusPaneShort ||
              *_newPaneShort.subcommand ||
-             *_newPaneCommand.subcommand);
+             *_newPaneCommand.subcommand ||
+             *_saveCommand);
 }
 
 // Method Description:
@@ -714,6 +792,7 @@ bool AppCommandlineArgs::_noCommandsProvided()
 void AppCommandlineArgs::_resetStateToDefault()
 {
     _profileName.clear();
+    _sessionId.clear();
     _startingDirectory.clear();
     _startingTitle.clear();
     _startingTabColor.clear();
@@ -941,10 +1020,21 @@ void AppCommandlineArgs::ValidateStartupCommands()
     // handoff connection from the operating system.
     if (!_isHandoffListener)
     {
+        // If we only have a single x-save command, then set our target to the
+        // current terminal window. This will prevent us from spawning a new
+        // window just to save the commandline.
+        if (_startupActions.size() == 1 &&
+            _startupActions.front().Action() == ShortcutAction::SaveSnippet &&
+            _windowTarget.empty())
+        {
+            _windowTarget = "0";
+        }
         // If we parsed no commands, or the first command we've parsed is not a new
         // tab action, prepend a new-tab command to the front of the list.
-        if (_startupActions.empty() ||
-            _startupActions.front().Action() != ShortcutAction::NewTab)
+        // (also, we don't need to do this if the only action is a x-save)
+        else if (_startupActions.empty() ||
+                 (_startupActions.front().Action() != ShortcutAction::NewTab &&
+                  _startupActions.front().Action() != ShortcutAction::SaveSnippet))
         {
             // Build the NewTab action from the values we've parsed on the commandline.
             NewTerminalArgs newTerminalArgs{};

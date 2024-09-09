@@ -20,6 +20,7 @@ RenderSettings::RenderSettings() noexcept
     SetColorTableEntry(TextColor::FRAME_FOREGROUND, INVALID_COLOR);
     SetColorTableEntry(TextColor::FRAME_BACKGROUND, INVALID_COLOR);
     SetColorTableEntry(TextColor::CURSOR_COLOR, INVALID_COLOR);
+    SetColorTableEntry(TextColor::SELECTION_BACKGROUND, INVALID_COLOR);
 
     SetColorAliasIndex(ColorAlias::DefaultForeground, TextColor::DARK_WHITE);
     SetColorAliasIndex(ColorAlias::DefaultBackground, TextColor::DARK_BLACK);
@@ -259,7 +260,7 @@ COLORREF RenderSettings::GetAttributeUnderlineColor(const TextAttribute& attr) c
 //   renderer if there are blinking cells currently in view.
 // Arguments:
 // - renderer: the renderer that will be redrawn.
-void RenderSettings::ToggleBlinkRendition(Renderer& renderer) noexcept
+void RenderSettings::ToggleBlinkRendition(Renderer* renderer) noexcept
 try
 {
     if (GetRenderMode(Mode::BlinkAllowed))
@@ -277,7 +278,10 @@ try
             // We reset the _blinkIsInUse flag before redrawing, so we can
             // get a fresh assessment of the current blink attribute usage.
             _blinkIsInUse = false;
-            renderer.TriggerRedrawAll();
+            if (renderer)
+            {
+                renderer->TriggerRedrawAll();
+            }
         }
     }
 }

@@ -36,7 +36,7 @@ Settings::Settings() :
     _bAutoPosition(true),
     _uHistoryBufferSize(DEFAULT_NUMBER_OF_COMMANDS),
     _uNumberOfHistoryBuffers(DEFAULT_NUMBER_OF_BUFFERS),
-    _bHistoryNoDup(false),
+    _bHistoryNoDup(true),
     // ColorTable initialized below
     _uCodePage(ServiceLocator::LocateGlobals().uiOEMCP),
     _uScrollScale(1),
@@ -53,7 +53,7 @@ Settings::Settings() :
     _fUseWindowSizePixels(false),
     // window size pixels initialized below
     _fInterceptCopyPaste(0),
-    _fUseDx(UseDx::Disabled),
+    _fUseDx(false),
     _fCopyColor(false)
 {
     _dwScreenBufferSize.X = 80;
@@ -110,7 +110,7 @@ void Settings::ApplyDesktopSpecificDefaults()
     _bQuickEdit = TRUE;
     _uHistoryBufferSize = 50;
     _uNumberOfHistoryBuffers = 4;
-    _bHistoryNoDup = FALSE;
+    _bHistoryNoDup = true;
 
     _renderSettings.ResetColorTable();
 
@@ -765,9 +765,14 @@ void Settings::SetTerminalScrolling(const bool terminalScrollingEnabled) noexcep
     _TerminalScrolling = terminalScrollingEnabled;
 }
 
+std::wstring_view Settings::GetAnswerbackMessage() const noexcept
+{
+    return _answerbackMessage;
+}
+
 // Determines whether our primary renderer should be DirectX or GDI.
 // This is based on user preference and velocity hold back state.
-UseDx Settings::GetUseDx() const noexcept
+bool Settings::GetUseDx() const noexcept
 {
     return _fUseDx;
 }
@@ -775,4 +780,19 @@ UseDx Settings::GetUseDx() const noexcept
 bool Settings::GetCopyColor() const noexcept
 {
     return _fCopyColor;
+}
+
+SettingsTextMeasurementMode Settings::GetTextMeasurementMode() const noexcept
+{
+    return _textMeasurement;
+}
+
+void Settings::SetTextMeasurementMode(const SettingsTextMeasurementMode mode) noexcept
+{
+    _textMeasurement = mode;
+}
+
+bool Settings::GetEnableBuiltinGlyphs() const noexcept
+{
+    return _fEnableBuiltinGlyphs;
 }

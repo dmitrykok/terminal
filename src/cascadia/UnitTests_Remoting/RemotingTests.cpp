@@ -82,24 +82,20 @@ namespace RemotingUnitTests
         void Summon(const Remoting::SummonWindowBehavior& /*args*/) DIE;
         void RequestShowNotificationIcon() DIE;
         void RequestHideNotificationIcon() DIE;
-        winrt::hstring GetWindowLayout() DIE;
-        void RequestQuitAll() DIE;
         void Quit() DIE;
         void AttachContentToWindow(Remoting::AttachRequest) DIE;
         void SendContent(winrt::Microsoft::Terminal::Remoting::RequestReceiveContentArgs) DIE;
-        TYPED_EVENT(WindowActivated, winrt::Windows::Foundation::IInspectable, Remoting::WindowActivatedArgs);
-        TYPED_EVENT(ExecuteCommandlineRequested, winrt::Windows::Foundation::IInspectable, Remoting::CommandlineArgs);
-        TYPED_EVENT(IdentifyWindowsRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(DisplayWindowIdRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(RenameRequested, winrt::Windows::Foundation::IInspectable, Remoting::RenameRequestArgs);
-        TYPED_EVENT(SummonRequested, winrt::Windows::Foundation::IInspectable, Remoting::SummonWindowBehavior);
-        TYPED_EVENT(ShowNotificationIconRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(HideNotificationIconRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(QuitAllRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(QuitRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(GetWindowLayoutRequested, winrt::Windows::Foundation::IInspectable, Remoting::GetWindowLayoutArgs);
-        TYPED_EVENT(AttachRequested, winrt::Windows::Foundation::IInspectable, winrt::Microsoft::Terminal::Remoting::AttachRequest);
-        TYPED_EVENT(SendContentRequested, winrt::Windows::Foundation::IInspectable, winrt::Microsoft::Terminal::Remoting::RequestReceiveContentArgs);
+        til::typed_event<winrt::Windows::Foundation::IInspectable, Remoting::WindowActivatedArgs> WindowActivated;
+        til::typed_event<winrt::Windows::Foundation::IInspectable, Remoting::CommandlineArgs> ExecuteCommandlineRequested;
+        til::typed_event<> IdentifyWindowsRequested;
+        til::typed_event<> DisplayWindowIdRequested;
+        til::typed_event<winrt::Windows::Foundation::IInspectable, Remoting::RenameRequestArgs> RenameRequested;
+        til::typed_event<winrt::Windows::Foundation::IInspectable, Remoting::SummonWindowBehavior> SummonRequested;
+        til::typed_event<> ShowNotificationIconRequested;
+        til::typed_event<> HideNotificationIconRequested;
+        til::typed_event<> QuitRequested;
+        til::typed_event<winrt::Windows::Foundation::IInspectable, winrt::Microsoft::Terminal::Remoting::AttachRequest> AttachRequested;
+        til::typed_event<winrt::Windows::Foundation::IInspectable, winrt::Microsoft::Terminal::Remoting::RequestReceiveContentArgs> SendContentRequested;
     };
 
     // Same idea.
@@ -113,21 +109,20 @@ namespace RemotingUnitTests
         void HandleActivatePeasant(Remoting::WindowActivatedArgs /*args*/) DIE;
         void SummonWindow(Remoting::SummonWindowSelectionArgs /*args*/) DIE;
         void SignalClose(uint64_t /*peasantId*/) DIE;
+        void QuitAll() DIE;
 
         void SummonAllWindows() DIE;
         bool DoesQuakeWindowExist() DIE;
         winrt::Windows::Foundation::Collections::IVectorView<Remoting::PeasantInfo> GetPeasantInfos() DIE;
-        winrt::Windows::Foundation::Collections::IVector<winrt::hstring> GetAllWindowLayouts() DIE;
         void RequestMoveContent(winrt::hstring, winrt::hstring, uint32_t, winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::Rect>) DIE;
         void RequestSendContent(Remoting::RequestReceiveContentArgs) DIE;
 
-        TYPED_EVENT(FindTargetWindowRequested, winrt::Windows::Foundation::IInspectable, Remoting::FindTargetWindowArgs);
-        TYPED_EVENT(ShowNotificationIconRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(HideNotificationIconRequested, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(WindowCreated, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(WindowClosed, winrt::Windows::Foundation::IInspectable, winrt::Windows::Foundation::IInspectable);
-        TYPED_EVENT(QuitAllRequested, winrt::Windows::Foundation::IInspectable, Remoting::QuitAllRequestedArgs);
-        TYPED_EVENT(RequestNewWindow, winrt::Windows::Foundation::IInspectable, Remoting::WindowRequestedArgs);
+        til::typed_event<winrt::Windows::Foundation::IInspectable, Remoting::FindTargetWindowArgs> FindTargetWindowRequested;
+        til::typed_event<> ShowNotificationIconRequested;
+        til::typed_event<> HideNotificationIconRequested;
+        til::typed_event<> WindowCreated;
+        til::typed_event<> WindowClosed;
+        til::typed_event<winrt::Windows::Foundation::IInspectable, Remoting::WindowRequestedArgs> RequestNewWindow;
     };
 
     class RemotingTests
@@ -2590,7 +2585,6 @@ namespace RemotingUnitTests
             try
             {
                 const auto result = m1->ProposeCommandline(args);
-                VERIFY_IS_FALSE(true, L"This should have thrown");
             }
             catch (const winrt::hresult_error& e)
             {
@@ -2600,9 +2594,10 @@ namespace RemotingUnitTests
 
                 // This is the same check in WindowManager::_proposeToMonarch.
                 VERIFY_IS_TRUE(e.code() == RPC_SERVER_UNAVAILABLE_HR || e.code() == RPC_CALL_FAILED_HR);
+                return;
             }
-            // just don't catch other types of exceptions. They'll take out
-            // TAEF, which will count as a failure.
+
+            VERIFY_FAIL(L"This should have thrown");
         }
     }
 

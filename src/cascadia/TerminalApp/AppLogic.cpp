@@ -124,8 +124,7 @@ namespace winrt::TerminalApp::implementation
         return appLogic->GetSettings();
     }
 
-    AppLogic::AppLogic() :
-        _reloadState{ std::chrono::milliseconds(100), []() { ApplicationState::SharedInstance().Reload(); } }
+    AppLogic::AppLogic()
     {
         // For your own sanity, it's better to do setup outside the ctor.
         // If you do any setup in the ctor that ends up throwing an exception,
@@ -150,6 +149,11 @@ namespace winrt::TerminalApp::implementation
         _languageProfileNotifier = winrt::make_self<LanguageProfileNotifier>([this]() {
             _reloadSettings->Run();
         });
+
+        // Do this here, rather than at the top of main. This will prevent us from
+        // including this variable in the vars we serialize in the
+        // Remoting::CommandlineArgs up in HandleCommandlineArgs.
+        _setupFolderPathEnvVar();
     }
 
     // Method Description:
@@ -321,15 +325,11 @@ namespace winrt::TerminalApp::implementation
                 //
                 // So DON'T ~give a mouse a cookie~ take a static ref here.
 
-                const winrt::hstring modifiedBasename{ std::filesystem::path{ fileModified }.filename().c_str() };
+                const auto modifiedBasename = std::filesystem::path{ fileModified }.filename();
 
                 if (modifiedBasename == settingsBasename)
                 {
                     _reloadSettings->Run();
-                }
-                else if (ApplicationState::SharedInstance().IsStatePath(modifiedBasename))
-                {
-                    _reloadState();
                 }
             });
     }
@@ -355,7 +355,7 @@ namespace winrt::TerminalApp::implementation
     }
     CATCH_LOG()
 
-    fire_and_forget AppLogic::_ApplyStartupTaskStateChange()
+    safe_void_coroutine AppLogic::_ApplyStartupTaskStateChange()
     try
     {
         // First, make sure we're running in a packaged context. This method
@@ -428,9 +428,13 @@ namespace winrt::TerminalApp::implementation
                                                                   _settingsLoadExceptionText,
                                                                   warnings,
                                                                   _settings);
-                _SettingsChangedHandlers(*this, *ev);
+                SettingsChanged.raise(*this, *ev);
                 return;
             }
+        }
+        else
+        {
+            _settings.LogSettingChanges(true);
         }
 
         if (initialLoad)
@@ -457,7 +461,7 @@ namespace winrt::TerminalApp::implementation
                                                           _settingsLoadExceptionText,
                                                           warnings,
                                                           _settings);
-        _SettingsChangedHandlers(*this, *ev);
+        SettingsChanged.raise(*this, *ev);
     }
 
     // This is a continuation of AppLogic::Create() and includes the more expensive parts.
@@ -550,6 +554,10 @@ namespace winrt::TerminalApp::implementation
                 return winrt::make<FindTargetWindowResult>(WindowingBehaviorUseNone);
             }
 
+            // Validate the args now. This will make sure that in the case of a
+            // single x-save command, we toss that commandline to the current
+            // terminal window
+            appArgs.ValidateStartupCommands();
             const std::string parsedTarget{ appArgs.GetTargetWindow() };
 
             // If the user did not provide any value on the commandline,
@@ -702,22 +710,6 @@ namespace winrt::TerminalApp::implementation
         return _settings.GlobalSettings().ShouldUsePersistedLayout();
     }
 
-    void AppLogic::SaveWindowLayoutJsons(const Windows::Foundation::Collections::IVector<hstring>& layouts)
-    {
-        std::vector<WindowLayout> converted;
-        converted.reserve(layouts.Size());
-
-        for (const auto& json : layouts)
-        {
-            if (json != L"")
-            {
-                converted.emplace_back(WindowLayout::FromJson(json));
-            }
-        }
-
-        ApplicationState::SharedInstance().PersistedWindowLayouts(winrt::single_threaded_vector(std::move(converted)));
-    }
-
     TerminalApp::ParseCommandlineResult AppLogic::GetParseCommandlineMessage(array_view<const winrt::hstring> args)
     {
         ::TerminalApp::AppCommandlineArgs _appArgs;
@@ -725,4 +717,14 @@ namespace winrt::TerminalApp::implementation
         return TerminalApp::ParseCommandlineResult{ winrt::to_hstring(_appArgs.GetExitMessage()), r };
     }
 
+    // Function Description
+    // * Adds a `WT_SETTINGS_DIR` env var to our own environment block, that
+    //   points at our settings directory. This allows portable installs to
+    //   refer to files in the portable install using %WT_SETTINGS_DIR%
+    void AppLogic::_setupFolderPathEnvVar()
+    {
+        std::wstring path{ CascadiaSettings::SettingsPath() };
+        auto folderPath = path.substr(0, path.find_last_of(L"\\"));
+        SetEnvironmentVariableW(L"WT_SETTINGS_DIR", folderPath.c_str());
+    }
 }

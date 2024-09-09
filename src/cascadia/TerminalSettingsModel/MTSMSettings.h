@@ -24,8 +24,10 @@ Author(s):
     X(hstring, WordDelimiters, "wordDelimiters", DEFAULT_WORD_DELIMITERS)                                                                                                                             \
     X(bool, CopyOnSelect, "copyOnSelect", false)                                                                                                                                                      \
     X(bool, FocusFollowMouse, "focusFollowMouse", false)                                                                                                                                              \
-    X(bool, ForceFullRepaintRendering, "experimental.rendering.forceFullRepaint", false)                                                                                                              \
-    X(bool, SoftwareRendering, "experimental.rendering.software", false)                                                                                                                              \
+    X(winrt::Microsoft::Terminal::Control::GraphicsAPI, GraphicsAPI, "rendering.graphicsAPI")                                                                                                         \
+    X(bool, DisablePartialInvalidation, "rendering.disablePartialInvalidation", false)                                                                                                                \
+    X(bool, SoftwareRendering, "rendering.software", false)                                                                                                                                           \
+    X(winrt::Microsoft::Terminal::Control::TextMeasurement, TextMeasurement, "compatibility.textMeasurement")                                                                                         \
     X(bool, UseBackgroundImageForWindow, "experimental.useBackgroundImageForWindow", false)                                                                                                           \
     X(bool, ForceVTInput, "experimental.input.forceVT", false)                                                                                                                                        \
     X(bool, TrimBlockSelection, "trimBlockSelection", true)                                                                                                                                           \
@@ -79,26 +81,25 @@ Author(s):
     X(int32_t, HistorySize, "historySize", DEFAULT_HISTORY_SIZE)                                                                                               \
     X(bool, SnapOnInput, "snapOnInput", true)                                                                                                                  \
     X(bool, AltGrAliasing, "altGrAliasing", true)                                                                                                              \
+    X(hstring, AnswerbackMessage, "answerbackMessage")                                                                                                         \
     X(hstring, Commandline, "commandline", L"%SystemRoot%\\System32\\cmd.exe")                                                                                 \
     X(Microsoft::Terminal::Control::ScrollbarState, ScrollState, "scrollbarState", Microsoft::Terminal::Control::ScrollbarState::Visible)                      \
     X(Microsoft::Terminal::Control::TextAntialiasingMode, AntialiasingMode, "antialiasingMode", Microsoft::Terminal::Control::TextAntialiasingMode::Grayscale) \
     X(hstring, StartingDirectory, "startingDirectory")                                                                                                         \
     X(bool, SuppressApplicationTitle, "suppressApplicationTitle", false)                                                                                       \
     X(guid, ConnectionType, "connectionType")                                                                                                                  \
-    X(hstring, Icon, "icon", L"\uE756")                                                                                                                        \
     X(CloseOnExitMode, CloseOnExit, "closeOnExit", CloseOnExitMode::Automatic)                                                                                 \
     X(hstring, TabTitle, "tabTitle")                                                                                                                           \
     X(Model::BellStyle, BellStyle, "bellStyle", BellStyle::Audible)                                                                                            \
     X(IEnvironmentVariableMap, EnvironmentVariables, "environment", nullptr)                                                                                   \
-    X(bool, UseAtlasEngine, "useAtlasEngine", true)                                                                                                            \
     X(bool, RightClickContextMenu, "experimental.rightClickContextMenu", false)                                                                                \
     X(Windows::Foundation::Collections::IVector<winrt::hstring>, BellSound, "bellSound", nullptr)                                                              \
     X(bool, Elevate, "elevate", false)                                                                                                                         \
-    X(bool, VtPassthrough, "experimental.connection.passthroughMode", false)                                                                                   \
-    X(bool, AutoMarkPrompts, "experimental.autoMarkPrompts", false)                                                                                            \
-    X(bool, ShowMarks, "experimental.showMarksOnScrollbar", false)                                                                                             \
+    X(bool, AutoMarkPrompts, "autoMarkPrompts", true)                                                                                                          \
+    X(bool, ShowMarks, "showMarksOnScrollbar", false)                                                                                                          \
     X(bool, RepositionCursorWithMouse, "experimental.repositionCursorWithMouse", false)                                                                        \
-    X(bool, ReloadEnvironmentVariables, "compatibility.reloadEnvironmentVariables", true)
+    X(bool, ReloadEnvironmentVariables, "compatibility.reloadEnvironmentVariables", true)                                                                      \
+    X(bool, RainbowSuggestions, "experimental.rainbowSuggestions", false)
 
 // Intentionally omitted Profile settings:
 // * Name
@@ -115,16 +116,19 @@ Author(s):
     X(winrt::Windows::UI::Text::FontWeight, FontWeight, "weight", DEFAULT_FONT_WEIGHT) \
     X(IFontAxesMap, FontAxes, "axes")                                                  \
     X(IFontFeatureMap, FontFeatures, "features")                                       \
+    X(bool, EnableBuiltinGlyphs, "builtinGlyphs", true)                                \
+    X(bool, EnableColorGlyphs, "colorGlyphs", true)                                    \
     X(winrt::hstring, CellWidth, "cellWidth")                                          \
     X(winrt::hstring, CellHeight, "cellHeight")
 
 #define MTSM_APPEARANCE_SETTINGS(X)                                                                                                                                \
     X(Core::CursorStyle, CursorShape, "cursorShape", Core::CursorStyle::Bar)                                                                                       \
     X(uint32_t, CursorHeight, "cursorHeight", DEFAULT_CURSOR_HEIGHT)                                                                                               \
-    X(double, BackgroundImageOpacity, "backgroundImageOpacity", 1.0)                                                                                               \
+    X(float, BackgroundImageOpacity, "backgroundImageOpacity", 1.0f)                                                                                               \
     X(winrt::Windows::UI::Xaml::Media::Stretch, BackgroundImageStretchMode, "backgroundImageStretchMode", winrt::Windows::UI::Xaml::Media::Stretch::UniformToFill) \
     X(bool, RetroTerminalEffect, "experimental.retroTerminalEffect", false)                                                                                        \
     X(hstring, PixelShaderPath, "experimental.pixelShaderPath")                                                                                                    \
+    X(hstring, PixelShaderImagePath, "experimental.pixelShaderImagePath")                                                                                          \
     X(ConvergedAlignment, BackgroundImageAlignment, "backgroundImageAlignment", ConvergedAlignment::Horizontal_Center | ConvergedAlignment::Vertical_Center)       \
     X(hstring, BackgroundImagePath, "backgroundImage")                                                                                                             \
     X(Model::IntenseStyle, IntenseTextStyle, "intenseTextStyle", Model::IntenseStyle::Bright)                                                                      \
@@ -135,9 +139,10 @@ Author(s):
 // * ForegroundKey, BackgroundKey, SelectionBackgroundKey, CursorColorKey: all optional colors
 // * Opacity: needs special parsing
 
-#define MTSM_THEME_SETTINGS(X)                                                             \
-    X(winrt::Microsoft::Terminal::Settings::Model::WindowTheme, Window, "window", nullptr) \
-    X(winrt::Microsoft::Terminal::Settings::Model::TabRowTheme, TabRow, "tabRow", nullptr) \
+#define MTSM_THEME_SETTINGS(X)                                                                   \
+    X(winrt::Microsoft::Terminal::Settings::Model::WindowTheme, Window, "window", nullptr)       \
+    X(winrt::Microsoft::Terminal::Settings::Model::SettingsTheme, Settings, "settings", nullptr) \
+    X(winrt::Microsoft::Terminal::Settings::Model::TabRowTheme, TabRow, "tabRow", nullptr)       \
     X(winrt::Microsoft::Terminal::Settings::Model::TabTheme, Tab, "tab", nullptr)
 
 #define MTSM_THEME_WINDOW_SETTINGS(X)                                                                                              \
@@ -146,6 +151,9 @@ Author(s):
     X(winrt::Microsoft::Terminal::Settings::Model::ThemeColor, UnfocusedFrame, "unfocusedFrame", nullptr)                          \
     X(bool, RainbowFrame, "experimental.rainbowFrame", false)                                                                      \
     X(bool, UseMica, "useMica", false)
+
+#define MTSM_THEME_SETTINGS_SETTINGS(X) \
+    X(winrt::Windows::UI::Xaml::ElementTheme, RequestedTheme, "theme", winrt::Windows::UI::Xaml::ElementTheme::Default)
 
 #define MTSM_THEME_TABROW_SETTINGS(X)                                                             \
     X(winrt::Microsoft::Terminal::Settings::Model::ThemeColor, Background, "background", nullptr) \

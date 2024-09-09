@@ -53,7 +53,7 @@ namespace winrt::TerminalApp::implementation
         contextMenuFlyout.Closed([weakThis](auto&&, auto&&) {
             if (auto tab{ weakThis.get() })
             {
-                tab->_RequestFocusActiveControlHandlers();
+                tab->RequestFocusActiveControl.raise();
             }
         });
         _AppendCloseMenuItems(contextMenuFlyout);
@@ -106,7 +106,7 @@ namespace winrt::TerminalApp::implementation
         closeTabMenuItem.Click([weakThis](auto&&, auto&&) {
             if (auto tab{ weakThis.get() })
             {
-                tab->_CloseRequestedHandlers(nullptr, nullptr);
+                tab->CloseRequested.raise(nullptr, nullptr);
             }
         });
         closeTabMenuItem.Text(RS_(L"TabClose"));
@@ -192,7 +192,8 @@ namespace winrt::TerminalApp::implementation
     // - <none>
     void TabBase::_UpdateSwitchToTabKeyChord()
     {
-        const auto keyChord = _actionMap ? _actionMap.GetKeyBindingForAction(ShortcutAction::SwitchToTab, SwitchToTabArgs{ _TabViewIndex }) : nullptr;
+        const auto id = fmt::format(FMT_COMPILE(L"Terminal.SwitchToTab{}"), _TabViewIndex);
+        const auto keyChord{ _actionMap.GetKeyBindingForAction(id) };
         const auto keyChordText = keyChord ? KeyChordSerialization::ToString(keyChord) : L"";
 
         if (_keyChord == keyChordText)
@@ -260,7 +261,7 @@ namespace winrt::TerminalApp::implementation
         TabViewItem().Tapped([weakThis{ get_weak() }](auto&&, auto&&) {
             if (auto tab{ weakThis.get() })
             {
-                tab->_RequestFocusActiveControlHandlers();
+                tab->RequestFocusActiveControl.raise();
             }
         });
 

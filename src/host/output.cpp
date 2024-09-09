@@ -113,6 +113,9 @@ static void _CopyRectangle(SCREEN_INFORMATION& screenInfo,
             next = OutputCell(*screenInfo.GetCellDataAt(sourcePos));
             screenInfo.GetTextBuffer().WriteLine(OutputCellIterator({ &current, 1 }), targetPos);
         } while (target.WalkInBounds(targetPos, walkDirection));
+
+        auto& textBuffer = screenInfo.GetTextBuffer();
+        ImageSlice::CopyBlock(textBuffer, source.ToExclusive(), textBuffer, target.ToExclusive());
     }
 }
 
@@ -222,7 +225,12 @@ std::wstring ReadOutputStringW(const SCREEN_INFORMATION& screenInfo,
             // Otherwise, add anything that isn't a trailing cell. (Trailings are duplicate copies of the leading.)
             if (it->DbcsAttr() != DbcsAttribute::Trailing)
             {
-                retVal += it->Chars();
+                auto chars = it->Chars();
+                if (chars.size() > 1)
+                {
+                    chars = { &UNICODE_REPLACEMENT, 1 };
+                }
+                retVal += chars;
             }
         }
 
@@ -421,6 +429,9 @@ void ScrollRegion(SCREEN_INFORMATION& screenInfo,
         const auto& view = remaining.at(i);
         screenInfo.WriteRect(fillData, view);
 
+        // If the region has image content it needs to be erased.
+        ImageSlice::EraseBlock(screenInfo.GetTextBuffer(), view.ToExclusive());
+
         // If we're scrolling an area that encompasses the full buffer width,
         // then the filled rows should also have their line rendition reset.
         if (view.Width() == buffer.Width() && destinationOriginGiven.x == 0)
@@ -458,8 +469,6 @@ void SetActiveScreenBuffer(SCREEN_INFORMATION& screenInfo)
 
     // Set window size.
     screenInfo.PostUpdateWindowSize();
-
-    gci.ConsoleIme.RefreshAreaAttributes();
 
     // Write data to screen.
     WriteToScreen(screenInfo, screenInfo.GetViewport());

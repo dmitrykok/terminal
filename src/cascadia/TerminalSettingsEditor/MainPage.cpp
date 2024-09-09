@@ -374,7 +374,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         }
         else if (clickedItemTag == actionsTag)
         {
-            contentFrame().Navigate(xaml_typename<Editor::Actions>(), winrt::make<ActionsPageNavigationState>(_settingsClone));
+            contentFrame().Navigate(xaml_typename<Editor::Actions>(), winrt::make<ActionsViewModel>(_settingsClone));
             const auto crumb = winrt::make<Breadcrumb>(box_value(clickedItemTag), RS_(L"Nav_Actions/Content"), BreadcrumbSubPage::None);
             _breadcrumbs.Append(crumb);
         }
@@ -467,7 +467,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
                                 WI_IsFlagSet(rAltState, CoreVirtualKeyStates::Down);
 
         const auto target = altPressed ? SettingsTarget::DefaultsFile : SettingsTarget::SettingsFile;
-        _OpenJsonHandlers(nullptr, target);
+        OpenJson.raise(nullptr, target);
     }
 
     void MainPage::OpenJsonKeyDown(const IInspectable& /*sender*/, const Windows::UI::Xaml::Input::KeyRoutedEventArgs& args)
@@ -475,12 +475,13 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         if (args.Key() == VirtualKey::Enter || args.Key() == VirtualKey::Space)
         {
             const auto target = args.KeyStatus().IsMenuKeyDown ? SettingsTarget::DefaultsFile : SettingsTarget::SettingsFile;
-            _OpenJsonHandlers(nullptr, target);
+            OpenJson.raise(nullptr, target);
         }
     }
 
     void MainPage::SaveButton_Click(const IInspectable& /*sender*/, const RoutedEventArgs& /*args*/)
     {
+        _settingsClone.LogSettingChanges(false);
         _settingsClone.WriteSettingsToDisk();
     }
 
@@ -602,7 +603,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         MUX::Controls::NavigationViewItem profileNavItem;
         profileNavItem.Content(box_value(profile.Name()));
         profileNavItem.Tag(box_value<Editor::ProfileViewModel>(profile));
-        profileNavItem.Icon(IconPathConverter::IconWUX(profile.Icon()));
+        profileNavItem.Icon(UI::IconPathConverter::IconWUX(profile.EvaluatedIcon()));
 
         // Update the menu item when the icon/name changes
         auto weakMenuItem{ make_weak(profileNavItem) };
@@ -612,7 +613,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
                 const auto& tag{ menuItem.Tag().as<Editor::ProfileViewModel>() };
                 if (args.PropertyName() == L"Icon")
                 {
-                    menuItem.Icon(IconPathConverter::IconWUX(tag.Icon()));
+                    menuItem.Icon(UI::IconPathConverter::IconWUX(tag.Icon()));
                 }
                 else if (args.PropertyName() == L"Name")
                 {
@@ -622,7 +623,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         });
 
         // Add an event handler for when the user wants to delete a profile.
-        profile.DeleteProfile({ this, &MainPage::_DeleteProfile });
+        profile.DeleteProfileRequested({ this, &MainPage::_DeleteProfile });
 
         return profileNavItem;
     }
@@ -699,17 +700,23 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             }
         }
 
-        if (!isMicaAvailable)
-        {
-            return;
-        }
-
         const auto& theme = _settingsSource.GlobalSettings().CurrentTheme();
-        const auto& requestedTheme = _settingsSource.GlobalSettings().CurrentTheme().RequestedTheme();
+        const bool hasThemeForSettings{ theme.Settings() != nullptr };
+        const auto& appTheme = theme.RequestedTheme();
+        const auto& requestedTheme = (hasThemeForSettings) ? theme.Settings().RequestedTheme() : appTheme;
 
         RequestedTheme(requestedTheme);
 
-        const auto bgKey = (theme.Window() != nullptr && theme.Window().UseMica()) ?
+        // Mica gets it's appearance from the app's theme, not necessarily the
+        // Page's theme. In the case of dark app, light settings, mica will be a
+        // dark color, and the text will also be dark, making the UI _very_ hard
+        // to read. (and similarly in the inverse situation).
+        //
+        // To mitigate this, don't set the transparent background in the case
+        // that our theme is different than the app's.
+        const bool actuallyUseMica = isMicaAvailable && (appTheme == requestedTheme);
+
+        const auto bgKey = (theme.Window() != nullptr && theme.Window().UseMica()) && actuallyUseMica ?
                                L"SettingsPageMicaBackground" :
                                L"SettingsPageBackground";
 

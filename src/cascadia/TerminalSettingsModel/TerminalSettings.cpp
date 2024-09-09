@@ -126,6 +126,11 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         if (newTerminalArgs)
         {
+            if (const auto id = newTerminalArgs.SessionId(); id != winrt::guid{})
+            {
+                defaultSettings.SessionId(id);
+            }
+
             // Override commandline, starting directory if they exist in newTerminalArgs
             if (!newTerminalArgs.Commandline().empty())
             {
@@ -256,6 +261,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         _RetroTerminalEffect = appearance.RetroTerminalEffect();
         _PixelShaderPath = winrt::hstring{ wil::ExpandEnvironmentStringsW<std::wstring>(appearance.PixelShaderPath().c_str()) };
+        _PixelShaderImagePath = winrt::hstring{ wil::ExpandEnvironmentStringsW<std::wstring>(appearance.PixelShaderImagePath().c_str()) };
 
         _IntenseIsBold = WI_IsFlagSet(appearance.IntenseTextStyle(), Microsoft::Terminal::Settings::Model::IntenseStyle::Bold);
         _IntenseIsBright = WI_IsFlagSet(appearance.IntenseTextStyle(), Microsoft::Terminal::Settings::Model::IntenseStyle::Bright);
@@ -278,6 +284,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         _HistorySize = profile.HistorySize();
         _SnapOnInput = profile.SnapOnInput();
         _AltGrAliasing = profile.AltGrAliasing();
+        _AnswerbackMessage = profile.AnswerbackMessage();
 
         // Fill in the remaining properties from the profile
         _ProfileName = profile.Name();
@@ -289,12 +296,13 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         _FontWeight = fontInfo.FontWeight();
         _FontFeatures = fontInfo.FontFeatures();
         _FontAxes = fontInfo.FontAxes();
+        _EnableBuiltinGlyphs = fontInfo.EnableBuiltinGlyphs();
+        _EnableColorGlyphs = fontInfo.EnableColorGlyphs();
         _CellWidth = fontInfo.CellWidth();
         _CellHeight = fontInfo.CellHeight();
         _Padding = profile.Padding();
 
         _Commandline = profile.Commandline();
-        _VtPassthrough = profile.VtPassthrough();
 
         _StartingDirectory = profile.EvaluatedStartingDirectory();
 
@@ -307,7 +315,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
             _SuppressApplicationTitle = profile.SuppressApplicationTitle();
         }
 
-        _UseAtlasEngine = profile.UseAtlasEngine();
         _ScrollState = profile.ScrollState();
 
         _AntialiasingMode = profile.AntialiasingMode();
@@ -337,10 +344,9 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         _ShowMarks = Feature_ScrollbarMarks::IsEnabled() && profile.ShowMarks();
 
         _RightClickContextMenu = profile.RightClickContextMenu();
-
         _RepositionCursorWithMouse = profile.RepositionCursorWithMouse();
-
         _ReloadEnvironmentVariables = profile.ReloadEnvironmentVariables();
+        _RainbowSuggestions = profile.RainbowSuggestions();
     }
 
     // Method Description:
@@ -356,9 +362,12 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         _WordDelimiters = globalSettings.WordDelimiters();
         _CopyOnSelect = globalSettings.CopyOnSelect();
+        _CopyFormatting = globalSettings.CopyFormatting();
         _FocusFollowMouse = globalSettings.FocusFollowMouse();
-        _ForceFullRepaintRendering = globalSettings.ForceFullRepaintRendering();
+        _GraphicsAPI = globalSettings.GraphicsAPI();
+        _DisablePartialInvalidation = globalSettings.DisablePartialInvalidation();
         _SoftwareRendering = globalSettings.SoftwareRendering();
+        _TextMeasurement = globalSettings.TextMeasurement();
         _UseBackgroundImageForWindow = globalSettings.UseBackgroundImageForWindow();
         _ForceVTInput = globalSettings.ForceVTInput();
         _TrimBlockSelection = globalSettings.TrimBlockSelection();

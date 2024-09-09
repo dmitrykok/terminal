@@ -15,13 +15,13 @@
 #define _TIL_INLINEPREFIX __declspec(noinline) inline
 
 #include "til/at.h"
-#include "til/bitmap.h"
 #include "til/coalesce.h"
 #include "til/color.h"
 #include "til/enumset.h"
 #include "til/pmr.h"
-#include "til/replace.h"
+#include "til/rect.h"
 #include "til/string.h"
+#include "til/type_traits.h"
 #include "til/u8u16convert.h"
 
 // Use keywords on TraceLogging providers to specify the category
@@ -55,6 +55,24 @@
 namespace til // Terminal Implementation Library. Also: "Today I Learned"
 {
     template<typename T>
+    as_view_t<T> safe_slice_abs(const T& view, size_t beg, size_t end)
+    {
+        const auto len = view.size();
+        end = std::min(end, len);
+        beg = std::min(beg, end);
+        return { view.data() + beg, end - beg };
+    }
+
+    template<typename T>
+    as_view_t<T> safe_slice_len(const T& view, size_t start, size_t count)
+    {
+        const auto len = view.size();
+        start = std::min(start, len);
+        count = std::min(count, len - start);
+        return { view.data() + start, count };
+    }
+
+    template<typename T>
     void manage_vector(std::vector<T>& vector, typename std::vector<T>::size_type requestedSize, float shrinkThreshold)
     {
         const auto existingCapacity = vector.capacity();
@@ -77,19 +95,6 @@ namespace til // Terminal Implementation Library. Also: "Today I Learned"
 }
 
 // These sit outside the namespace because they sit outside for WIL too.
-
-// Inspired from RETURN_IF_WIN32_BOOL_FALSE
-// WIL doesn't include a RETURN_BOOL_IF_FALSE, and RETURN_IF_WIN32_BOOL_FALSE
-//  will actually return the value of GLE.
-#define RETURN_BOOL_IF_FALSE(b)                     \
-    do                                              \
-    {                                               \
-        const bool __boolRet = wil::verify_bool(b); \
-        if (!__boolRet)                             \
-        {                                           \
-            return __boolRet;                       \
-        }                                           \
-    } while (0, 0)
 
 // Due to a bug (DevDiv 441931), Warning 4297 (function marked noexcept throws
 // exception) is detected even when the throwing code is unreachable, such as

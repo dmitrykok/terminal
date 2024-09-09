@@ -15,6 +15,7 @@
 
 using namespace winrt::Windows::ApplicationModel;
 using namespace winrt::Windows::ApplicationModel::DataTransfer;
+using namespace winrt::Windows::Graphics::Display;
 using namespace winrt::Windows::UI::Xaml;
 using namespace winrt::Windows::UI::Xaml::Controls;
 using namespace winrt::Windows::UI::Core;
@@ -217,6 +218,7 @@ namespace winrt::TerminalApp::implementation
         _root->SetSettings(_settings, false); // We're on our UI thread right now, so this is safe
         _root->Loaded({ get_weak(), &TerminalWindow::_OnLoaded });
         _root->Initialized({ get_weak(), &TerminalWindow::_pageInitialized });
+        _root->WindowSizeChanged({ get_weak(), &TerminalWindow::_WindowSizeChanged });
         _root->Create();
 
         AppLogic::Current()->SettingsChanged({ get_weak(), &TerminalWindow::UpdateSettingsHandler });
@@ -226,7 +228,7 @@ namespace winrt::TerminalApp::implementation
         auto args = winrt::make_self<SystemMenuChangeArgs>(RS_(L"SettingsMenuItem"),
                                                            SystemMenuChangeAction::Add,
                                                            SystemMenuItemHandler(this, &TerminalWindow::_OpenSettingsUI));
-        _SystemMenuChangeRequestedHandlers(*this, *args);
+        SystemMenuChangeRequested.raise(*this, *args);
 
         TraceLoggingWrite(
             g_hTerminalAppProvider,
@@ -263,11 +265,11 @@ namespace winrt::TerminalApp::implementation
         AppLogic::Current()->NotifyRootInitialized();
     }
 
-    void TerminalWindow::Quit()
+    void TerminalWindow::PersistState()
     {
         if (_root)
         {
-            _root->CloseWindow(true);
+            _root->PersistState();
         }
     }
 
@@ -562,9 +564,21 @@ namespace winrt::TerminalApp::implementation
     {
         winrt::Windows::Foundation::Size proposedSize{};
 
+        // In focus mode, we don't want to include our own tab row in the size
+        // of the window that we hand back. So we account for passing
+        // --focusMode on the commandline here, and the mode in the settings.
+        // Below, we'll also account for if focus mode was persisted into the
+        // session for restoration.
+        bool focusMode = _appArgs.GetLaunchMode().value_or(_settings.GlobalSettings().LaunchMode()) == LaunchMode::FocusMode;
+
         const auto scale = static_cast<float>(dpi) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
         if (const auto layout = LoadPersistedLayout())
         {
+            if (layout.LaunchMode())
+            {
+                focusMode = layout.LaunchMode().Value() == LaunchMode::FocusMode;
+            }
+
             if (layout.InitialSize())
             {
                 proposedSize = layout.InitialSize().Value();
@@ -602,7 +616,7 @@ namespace winrt::TerminalApp::implementation
         // GH#2061 - If the global setting "Always show tab bar" is
         // set or if "Show tabs in title bar" is set, then we'll need to add
         // the height of the tab bar here.
-        if (_settings.GlobalSettings().ShowTabsInTitlebar())
+        if (_settings.GlobalSettings().ShowTabsInTitlebar() && !focusMode)
         {
             // In the past, we used to actually instantiate a TitlebarControl
             // and use Measure() to determine the DesiredSize of the control, to
@@ -620,7 +634,7 @@ namespace winrt::TerminalApp::implementation
             static constexpr auto titlebarHeight = 40;
             proposedSize.Height += (titlebarHeight)*scale;
         }
-        else if (_settings.GlobalSettings().AlwaysShowTabs())
+        else if (_settings.GlobalSettings().AlwaysShowTabs() && !focusMode)
         {
             // Same comment as above, but with a TabRowControl.
             //
@@ -748,26 +762,35 @@ namespace winrt::TerminalApp::implementation
     void TerminalWindow::_RefreshThemeRoutine()
     {
         // Propagate the event to the host layer, so it can update its own UI
-        _RequestedThemeChangedHandlers(*this, Theme());
+        RequestedThemeChanged.raise(*this, Theme());
     }
 
     // This may be called on a background thread, or the main thread, but almost
     // definitely not on OUR UI thread.
-    winrt::fire_and_forget TerminalWindow::UpdateSettings(winrt::TerminalApp::SettingsLoadEventArgs args)
+    safe_void_coroutine TerminalWindow::UpdateSettings(winrt::TerminalApp::SettingsLoadEventArgs args)
     {
-        _settings = args.NewSettings();
+        // GH#17620: We have a bug somewhere where a window doesn't get unregistered from the window list.
+        // This causes UpdateSettings calls where the thread dispatcher is already null.
+        const auto dispatcher = _root->Dispatcher();
+        if (!dispatcher)
+        {
+            co_return;
+        }
 
         const auto weakThis{ get_weak() };
-        co_await wil::resume_foreground(_root->Dispatcher());
+        co_await wil::resume_foreground(dispatcher);
+
         // Back on our UI thread...
         if (auto logic{ weakThis.get() })
         {
+            _settings = args.NewSettings();
+
             // Update the settings in TerminalPage
             // We're on our UI thread right now, so this is safe
             _root->SetSettings(_settings, true);
 
             // Bubble the notification up to the AppHost, now that we've updated our _settings.
-            _SettingsChangedHandlers(*this, args);
+            SettingsChanged.raise(*this, args);
 
             if (FAILED(args.Result()))
             {
@@ -863,7 +886,7 @@ namespace winrt::TerminalApp::implementation
             auto focusedObject{ Windows::UI::Xaml::Input::FocusManager::GetFocusedElement(xamlRoot) };
             do
             {
-                if (auto keyListener{ focusedObject.try_as<IDirectKeyListener>() })
+                if (auto keyListener{ focusedObject.try_as<UI::IDirectKeyListener>() })
                 {
                     if (keyListener.OnDirectKeyEvent(vkey, scanCode, down))
                     {
@@ -891,7 +914,7 @@ namespace winrt::TerminalApp::implementation
                         // don't want to go around the loop again.
                         if (!focusedObject)
                         {
-                            if (auto keyListener{ _root.try_as<IDirectKeyListener>() })
+                            if (auto keyListener{ _root.try_as<UI::IDirectKeyListener>() })
                             {
                                 return keyListener.OnDirectKeyEvent(vkey, scanCode, down);
                             }
@@ -916,32 +939,11 @@ namespace winrt::TerminalApp::implementation
     // - <none>
     // Return Value:
     // - <none>
-    void TerminalWindow::CloseWindow(LaunchPosition pos, const bool isLastWindow)
+    void TerminalWindow::CloseWindow()
     {
         if (_root)
         {
-            // If persisted layout is enabled and we are the last window closing
-            // we should save our state.
-            if (_settings.GlobalSettings().ShouldUsePersistedLayout() && isLastWindow)
-            {
-                if (const auto layout = _root->GetWindowLayout())
-                {
-                    layout.InitialPosition(pos);
-                    const auto state = ApplicationState::SharedInstance();
-                    state.PersistedWindowLayouts(winrt::single_threaded_vector<WindowLayout>({ layout }));
-                }
-            }
-
-            _root->CloseWindow(false);
-        }
-    }
-
-    void TerminalWindow::ClearPersistedWindowState()
-    {
-        if (_settings.GlobalSettings().ShouldUsePersistedLayout())
-        {
-            auto state = ApplicationState::SharedInstance();
-            state.PersistedWindowLayouts(nullptr);
+            _root->CloseWindow();
         }
     }
 
@@ -1134,19 +1136,6 @@ namespace winrt::TerminalApp::implementation
         return winrt::to_hstring(_appArgs.GetExitMessage());
     }
 
-    hstring TerminalWindow::GetWindowLayoutJson(LaunchPosition position)
-    {
-        if (_root != nullptr)
-        {
-            if (const auto layout = _root->GetWindowLayout())
-            {
-                layout.InitialPosition(position);
-                return WindowLayout::ToJson(layout);
-            }
-        }
-        return L"";
-    }
-
     void TerminalWindow::SetPersistedLayoutIdx(const uint32_t idx)
     {
         _loadFromPersistedLayoutIdx = idx;
@@ -1239,7 +1228,7 @@ namespace winrt::TerminalApp::implementation
             // If we're entering Quake Mode from Focus Mode, then this will do nothing
             // If we're leaving Quake Mode (we're already in Focus Mode), then this will do nothing
             _root->SetFocusMode(true);
-            _IsQuakeWindowChangedHandlers(*this, nullptr);
+            IsQuakeWindowChanged.raise(*this, nullptr);
         }
     }
     void TerminalWindow::WindowId(const uint64_t& id)
@@ -1272,7 +1261,7 @@ namespace winrt::TerminalApp::implementation
                 // Create the equivalent NewTab action.
                 const auto newAction = Settings::Model::ActionAndArgs{ Settings::Model::ShortcutAction::NewTab,
                                                                        Settings::Model::NewTabArgs(firstAction.Args() ?
-                                                                                                       firstAction.Args().try_as<Settings::Model::SplitPaneArgs>().TerminalArgs() :
+                                                                                                       firstAction.Args().try_as<Settings::Model::SplitPaneArgs>().ContentArgs() :
                                                                                                        nullptr) };
                 args.SetAt(0, newAction);
             }
@@ -1344,6 +1333,41 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
+    void TerminalWindow::_WindowSizeChanged(const IInspectable&, winrt::Microsoft::Terminal::Control::WindowSizeChangedEventArgs args)
+    {
+        winrt::Windows::Foundation::Size pixelSize = { static_cast<float>(args.Width()), static_cast<float>(args.Height()) };
+        const auto scale = static_cast<float>(DisplayInformation::GetForCurrentView().RawPixelsPerViewPixel());
+
+        if (!FocusMode())
+        {
+            if (!_settings.GlobalSettings().AlwaysShowTabs())
+            {
+                // Hide the title bar = off, Always show tabs = off.
+                static constexpr auto titlebarHeight = 10;
+                pixelSize.Height += (titlebarHeight)*scale;
+            }
+            else if (!_settings.GlobalSettings().ShowTabsInTitlebar())
+            {
+                // Hide the title bar = off, Always show tabs = on.
+                static constexpr auto titlebarAndTabBarHeight = 40;
+                pixelSize.Height += (titlebarAndTabBarHeight)*scale;
+            }
+            // Hide the title bar = on, Always show tabs = on.
+            // In this case, we don't add any height because
+            // NonClientIslandWindow::GetTotalNonClientExclusiveSize() gets
+            // called in AppHost::_resizeWindow and it already takes title bar
+            // height into account.  In other cases above
+            // IslandWindow::GetTotalNonClientExclusiveSize() is called, and it
+            // doesn't take the title bar height into account, so we have to do
+            // the calculation manually.
+        }
+
+        args.Width(static_cast<int32_t>(pixelSize.Width));
+        args.Height(static_cast<int32_t>(pixelSize.Height));
+
+        WindowSizeChanged.raise(*this, args);
+    }
+
     winrt::hstring WindowProperties::WindowName() const noexcept
     {
         return _WindowName;
@@ -1359,8 +1383,8 @@ namespace winrt::TerminalApp::implementation
             // PropertyChangedEventArgs will throw.
             try
             {
-                _PropertyChangedHandlers(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"WindowName" });
-                _PropertyChangedHandlers(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"WindowNameForDisplay" });
+                PropertyChanged.raise(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"WindowName" });
+                PropertyChanged.raise(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"WindowNameForDisplay" });
             }
             CATCH_LOG();
         }
@@ -1384,7 +1408,7 @@ namespace winrt::TerminalApp::implementation
     // - a string for displaying the name of the window.
     winrt::hstring WindowProperties::WindowIdForDisplay() const noexcept
     {
-        return winrt::hstring{ fmt::format(L"{}: {}",
+        return winrt::hstring{ fmt::format(FMT_COMPILE(L"{}: {}"),
                                            std::wstring_view(RS_(L"WindowIdLabel")),
                                            _WindowId) };
     }
@@ -1398,7 +1422,7 @@ namespace winrt::TerminalApp::implementation
     winrt::hstring WindowProperties::WindowNameForDisplay() const noexcept
     {
         return _WindowName.empty() ?
-                   winrt::hstring{ fmt::format(L"<{}>", RS_(L"UnnamedWindowName")) } :
+                   winrt::hstring{ fmt::format(FMT_COMPILE(L"<{}>"), RS_(L"UnnamedWindowName")) } :
                    _WindowName;
     }
 
