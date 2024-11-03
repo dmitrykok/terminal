@@ -22,5 +22,5 @@ public:
 
 private:
     static void _updateProfiles(IObjectCollection* jumplistItems, winrt::Windows::Foundation::Collections::IVectorView<winrt::Microsoft::Terminal::Settings::Model::Profile> profiles);
-    static winrt::com_ptr<IShellLinkW> _createShellLink(const std::wstring_view name, const std::wstring_view path, const std::wstring_view args);
+    static winrt::com_ptr<IShellLinkW> _createShellLink(const std::wstring_view name, const std::wstring_view path, const std::wstring_view args, bool addRunAsAdminOption = false);
 };

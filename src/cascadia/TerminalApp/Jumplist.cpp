@@ -127,6 +127,13 @@ void Jumplist::_updateProfiles(IObjectCollection* jumplistItems, winrt::Windows:
         const auto normalizedIconPath{ _normalizeIconPath(profile.Icon()) };
         const auto shLink = _createShellLink(profile.Name(), normalizedIconPath, args);
         THROW_IF_FAILED(jumplistItems->AddObject(shLink.get()));
+
+        // Admin launch arguments for this profile
+        auto adminArgs = fmt::format(FMT_COMPILE(L"-p {} -runasadmin"), to_hstring(profile.Guid()));
+
+        // Create the shell link object for the profile with administrator privileges
+        const auto shLinkAdmin = _createShellLink(profile.Name() + L" (Admin)", normalizedIconPath, adminArgs, true);
+        THROW_IF_FAILED(jumplistItems->AddObject(shLinkAdmin.get()));
     }
 }
 
@@ -142,13 +149,21 @@ void Jumplist::_updateProfiles(IObjectCollection* jumplistItems, winrt::Windows:
 // - shLink: The shell link object to return.
 // Return Value:
 // - S_OK or HRESULT failure code.
-winrt::com_ptr<IShellLinkW> Jumplist::_createShellLink(const std::wstring_view name, const std::wstring_view path, const std::wstring_view args)
+winrt::com_ptr<IShellLinkW> Jumplist::_createShellLink(const std::wstring_view name, const std::wstring_view path, const std::wstring_view args, bool addRunAsAdminOption)
 {
     auto sh = winrt::create_instance<IShellLinkW>(CLSID_ShellLink, CLSCTX_ALL);
 
     const auto module{ GetWtExePath() };
     THROW_IF_FAILED(sh->SetPath(module.data()));
-    THROW_IF_FAILED(sh->SetArguments(args.data()));
+
+    // Concatenate arguments properly, converting to std::wstring first
+    std::wstring finalArgs = std::wstring(args);
+    if (addRunAsAdminOption)
+    {
+        finalArgs += L" -runasadmin";
+    }
+    THROW_IF_FAILED(sh->SetArguments(finalArgs.c_str()));
+
     auto propStore{ sh.as<IPropertyStore>() };
 
     PROPVARIANT titleProp;
@@ -186,3 +201,49 @@ winrt::com_ptr<IShellLinkW> Jumplist::_createShellLink(const std::wstring_view n
 
     return sh;
 }
+
+
+//winrt::com_ptr<IShellLinkW> Jumplist::_createShellLink(const std::wstring_view name, const std::wstring_view path, const std::wstring_view args)
+//{
+//    auto sh = winrt::create_instance<IShellLinkW>(CLSID_ShellLink, CLSCTX_ALL);
+//
+//    const auto module{ GetWtExePath() };
+//    THROW_IF_FAILED(sh->SetPath(module.data()));
+//    THROW_IF_FAILED(sh->SetArguments(args.data()));
+//    auto propStore{ sh.as<IPropertyStore>() };
+//
+//    PROPVARIANT titleProp;
+//    titleProp.vt = VT_LPWSTR;
+//    titleProp.pwszVal = const_cast<wchar_t*>(name.data());
+//
+//    // Check for a comma in the path. If we find one we have an indirect icon. Parse the path into a file path and index/id.
+//    auto commaPosition = path.find(L",");
+//    if (commaPosition != std::wstring_view::npos)
+//    {
+//        const std::wstring iconPath{ path.substr(0, commaPosition) };
+//
+//        // We dont want the comma included so add 1 to its position
+//        if (const auto iconIndex = til::parse_signed<int>(path.substr(commaPosition + 1)))
+//        {
+//            THROW_IF_FAILED(sh->SetIconLocation(iconPath.data(), *iconIndex));
+//        }
+//    }
+//    else if (til::ends_with(path, L"exe") || til::ends_with(path, L"dll"))
+//    {
+//        // We have a binary path but no index/id. Default to 0
+//        THROW_IF_FAILED(sh->SetIconLocation(path.data(), 0));
+//    }
+//    else
+//    {
+//        PROPVARIANT iconProp;
+//        iconProp.vt = VT_LPWSTR;
+//        iconProp.pwszVal = const_cast<wchar_t*>(path.data());
+//
+//        THROW_IF_FAILED(propStore->SetValue(PKEY_AppUserModel_DestListLogoUri, iconProp));
+//    }
+//
+//    THROW_IF_FAILED(propStore->SetValue(PKEY_Title, titleProp));
+//    THROW_IF_FAILED(propStore->Commit());
+//
+//    return sh;
+//}
