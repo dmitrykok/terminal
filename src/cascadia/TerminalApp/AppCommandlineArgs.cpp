@@ -193,6 +193,10 @@ void AppCommandlineArgs::_buildParser()
     };
     _app.add_option_function<std::string>("--size", sizeCallback, RS_A(L"CmdSizeDesc"));
 
+    _app.add_option("--localStateFolder", _cmdSettingsPath,
+                   RS_A(L"CmdLocalStateFoldertArgDesc"))
+        ->check(CLI::ExistingDirectory); // optionally validate that the folder exists
+
     _app.add_option("-w,--window",
                     _windowTarget,
                     RS_A(L"CmdWindowTargetArgDesc"));
@@ -1198,6 +1202,11 @@ void AppCommandlineArgs::FullResetState()
     _isHandoffListener = false;
 
     _windowTarget = {};
+}
+
+std::string_view AppCommandlineArgs::GetLocalStateOverride() const noexcept
+{
+    return _cmdSettingsPath;
 }
 
 std::string_view AppCommandlineArgs::GetTargetWindow() const noexcept

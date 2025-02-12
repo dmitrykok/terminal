@@ -1,0 +1,9 @@
+namespace Microsoft.Terminal.Settings.Model
+{
+    [default_interface] runtimeclass SharedContext {
+        static SharedContext Instance();
+
+        void SetLocalStateOverride(String path);
+        String GetLocalStateOverride();
+    };
+}

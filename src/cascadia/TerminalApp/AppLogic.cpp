@@ -405,6 +405,14 @@ namespace winrt::TerminalApp::implementation
         //  - don't change the settings (and don't actually apply the new settings)
         //  - don't persist them.
         //  - display a loading error
+        const auto settings{ winrt::TerminalApp::implementation::AppLogic::CurrentAppSettings() };
+        const std::string localStateOverride{ _settingsAppArgs.GetLocalStateOverride() };
+        if (!localStateOverride.empty())
+        {
+            _localStateOverride = localStateOverride;
+            SharedContext::Instance().SetLocalStateOverride(winrt::to_hstring(localStateOverride));
+        }
+
         _settingsLoadedResult = _TryLoadSettings();
 
         const auto initialLoad = !_loadedInitialSettings;
@@ -726,5 +734,10 @@ namespace winrt::TerminalApp::implementation
         std::wstring path{ CascadiaSettings::SettingsPath() };
         auto folderPath = path.substr(0, path.find_last_of(L"\\"));
         SetEnvironmentVariableW(L"WT_SETTINGS_DIR", folderPath.c_str());
+    }
+
+    std::optional<std::string> AppLogic::GetLocalStateOverride() const noexcept
+    {
+        return _localStateOverride;
     }
 }

@@ -464,6 +464,9 @@
   <data name="CmdWindowTargetArgDesc" xml:space="preserve">
     <value>Specify a terminal window to run the given commandline in. "0" always refers to the current window. </value>
   </data>
+  <data name="CmdLocalStateFoldertArgDesc" xml:space="preserve">
+    <value>Overrides the default LocalState folder path for this instance.</value>
+  </data>
   <data name="CmdPositionDesc" xml:space="preserve">
     <value>Specify the position for the terminal, in "x,y" format.</value>
   </data>

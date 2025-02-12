@@ -48,6 +48,7 @@ public:
     void DisableHelpInExitMessage();
     void FullResetState();
 
+    std::string_view GetLocalStateOverride() const noexcept;
     std::string_view GetTargetWindow() const noexcept;
 
 private:
@@ -139,6 +140,7 @@ private:
 
     int _loadPersistedLayoutIdx{};
     std::string _windowTarget{};
+    std::string _cmdSettingsPath{};
     // Are you adding more args or attributes here? If they are not reset in _resetStateToDefault, make sure to reset them in FullResetState
 
     winrt::Microsoft::Terminal::Settings::Model::NewTerminalArgs _getNewTerminalArgs(NewTerminalSubcommand& subcommand);

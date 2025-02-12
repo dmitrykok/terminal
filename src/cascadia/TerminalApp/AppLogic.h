@@ -74,10 +74,14 @@ namespace winrt::TerminalApp::implementation
 
         til::typed_event<winrt::Windows::Foundation::IInspectable, winrt::TerminalApp::SettingsLoadEventArgs> SettingsChanged;
 
+        std::optional<std::string> GetLocalStateOverride() const noexcept;
+
     private:
         bool _isElevated{ false };
         bool _canDragDrop{ false };
         std::atomic<bool> _notifyRootInitializedCalled{ false };
+
+        std::optional<std::string> _localStateOverride;
 
         Microsoft::Terminal::Settings::Model::CascadiaSettings _settings{ nullptr };
 
