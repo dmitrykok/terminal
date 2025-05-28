@@ -291,4 +291,6 @@ profiles.json
 msix/
 *.msix
 *.msixbundle
+*.link
+maestrohistory.txt
 0001-Fix-Find-menu-with-selection.patch
