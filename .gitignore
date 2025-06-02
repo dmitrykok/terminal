@@ -192,6 +192,8 @@ ClientBin/
 [Ss]tyle[Cc]op.*
 ~$*
 *~
+~AutoRecover.*
+*.vcxproj[0123456789]
 *.dbmdl
 *.dbproj.schemaview
 *.pfx
