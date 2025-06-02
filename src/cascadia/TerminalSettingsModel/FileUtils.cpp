@@ -15,6 +15,7 @@ static constexpr std::wstring_view UnpackagedSettingsFolderName{ L"Microsoft\\Wi
 static constexpr std::wstring_view ReleaseSettingsFolder{ L"Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\" };
 static constexpr std::wstring_view PortableModeMarkerFile{ L".portable" };
 static constexpr std::wstring_view PortableModeSettingsFolder{ L"settings" };
+static constexpr std::wstring_view ProjectFolderPrefix{ L"Projects" };
 
 namespace winrt::Microsoft::Terminal::Settings::Model
 {
@@ -44,7 +45,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model
 			}
 			CATCH_LOG()
 
-			std::wstring_view envProjectName{ wil::TryGetEnvironmentVariableW<std::wstring>(ENV_WT_PROJECT_NAME) };
+			std::wstring envProjectName{ wil::TryGetEnvironmentVariableW<std::wstring>(ENV_WT_PROJECT_NAME) };
 
 			if (!IsPackaged() && IsPortableMode())
 			{
@@ -52,6 +53,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model
 				modulePath.replace_filename(PortableModeSettingsFolder);
 				if (!envProjectName.empty())
 				{
+					modulePath /= ProjectFolderPrefix;
 					modulePath /= envProjectName;
 				}
 				std::filesystem::create_directories(modulePath);
@@ -68,6 +70,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model
 
 			if (!envProjectName.empty())
 			{
+				parentDirectoryForSettingsFile /= ProjectFolderPrefix;
 				parentDirectoryForSettingsFile /= envProjectName;
 			}
 
@@ -100,7 +103,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model
 			}
 			CATCH_LOG()
 
-			std::wstring_view envProjectName{ wil::TryGetEnvironmentVariableW<std::wstring>(ENV_WT_PROJECT_NAME) };
+			std::wstring envProjectName{ wil::TryGetEnvironmentVariableW<std::wstring>(ENV_WT_PROJECT_NAME) };
 
 			wil::unique_cotaskmem_string localAppDataFolder;
 			// We're using KF_FLAG_NO_PACKAGE_REDIRECTION to ensure that we always get the
@@ -115,6 +118,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model
 
 			if (!envProjectName.empty())
 			{
+				parentDirectoryForSettingsFile /= ProjectFolderPrefix;
 				parentDirectoryForSettingsFile /= envProjectName;
 			}
 

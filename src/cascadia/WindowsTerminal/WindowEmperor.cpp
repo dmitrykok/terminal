@@ -376,7 +376,7 @@ void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
 
 		// Create another window if needed: There aren't any yet, or we got an explicit command line.
 		if (_windows.empty() ||
-			(args.size() > 1 && (cmdArgs.LocalState().empty() || cmdArgs.ProjectName().empty())) ||
+			(args.size() > 1 && (cmdArgs.LocalState().empty() && cmdArgs.ProjectName().empty())) ||
 			args.size() > 3) // LocalState is 2 additional strings
 		{
 			_dispatchCommandline({ args, cwd, showCmd, env });
