@@ -691,8 +691,30 @@ JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::NewTabMenuEntryT
     };
 };
 
+// Possible NewProjectMenuEntryType values
+JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::NewProjectMenuEntryType)
+{
+    JSON_MAPPINGS(6) = {
+        pair_type{ "project", ValueType::Project },
+        pair_type{ "projectAction", ValueType::ProjectAction },
+        pair_type{ "projectSeparator", ValueType::ProjectSeparator },
+        pair_type{ "projectFolder", ValueType::ProjectFolder },
+        pair_type{ "projectRemaining", ValueType::ProjectRemaining },
+        pair_type{ "projectMatch", ValueType::ProjectMatch },
+    };
+};
+
 // Possible FolderEntryInlining values
 JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::FolderEntryInlining)
+{
+    JSON_MAPPINGS(2) = {
+        pair_type{ "never", ValueType::Never },
+        pair_type{ "auto", ValueType::Auto },
+    };
+};
+
+// Possible ProjectFolderEntryInlining values
+JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::ProjectFolderEntryInlining)
 {
     JSON_MAPPINGS(2) = {
         pair_type{ "never", ValueType::Never },
