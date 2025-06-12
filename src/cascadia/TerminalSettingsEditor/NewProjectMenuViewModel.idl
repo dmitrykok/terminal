@@ -28,9 +28,9 @@ namespace Microsoft.Terminal.Settings.Editor
         ProjectFolderTreeViewEntry CurrentProjectFolderTreeViewSelectedItem;
         Boolean IsProjectRemainingEntryMissing { get; };
 
-        IObservableVector<NewProjectMenuEntryViewModel> CurrentView { get; };
+        IObservableVector<NewProjectMenuEntryViewModel> ProjectCurrentView { get; };
         IObservableVector<Microsoft.Terminal.Settings.Model.Project> AvailableProjects { get; };
-        IObservableVector<ProjectFolderTreeViewEntry> FolderTree { get; };
+        IObservableVector<ProjectFolderTreeViewEntry> ProjectFolderTree { get; };
         Microsoft.Terminal.Settings.Model.Project SelectedProject;
 
         String CurrentFolderName;
@@ -39,7 +39,7 @@ namespace Microsoft.Terminal.Settings.Editor
         String ProjectMatcherName;
         String ProjectMatcherSource;
         String ProjectMatcherCommandline;
-        String AddFolderName;
+        String AddProjectFolderName;
 
         void RequestReorderEntry(NewProjectMenuEntryViewModel vm, Boolean goingUp);
         void RequestDeleteEntry(NewProjectMenuEntryViewModel vm);

@@ -268,41 +268,41 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 		SelectedProject(AvailableProjects().GetAt(0));
 
 		// TODO: remove pass nullptr
-		_rootEntries = _ConvertToViewModelEntries(nullptr, _Settings);
-		_rootEntriesChangedRevoker = _rootEntries.VectorChanged(winrt::auto_revoke, [this](auto&&, const IVectorChangedEventArgs& args) {
-			switch (args.CollectionChange())
-			{
-			case CollectionChange::Reset:
-			{
-				// fully replace settings model with view model structure
-				std::vector<Model::NewProjectMenuEntry> modelEntries;
-				for (const auto& entry : _rootEntries)
-				{
-					modelEntries.push_back(NewProjectMenuEntryViewModel::GetModel(entry));
-				}
-				_Settings.GlobalSettings().NewProjectMenu(single_threaded_vector<Model::NewProjectMenuEntry>(std::move(modelEntries)));
-				return;
-			}
-			case CollectionChange::ItemInserted:
-			{
-				const auto& insertedEntryVM = _rootEntries.GetAt(args.Index());
-				const auto& insertedEntry = NewProjectMenuEntryViewModel::GetModel(insertedEntryVM);
-				_Settings.GlobalSettings().NewProjectMenu().InsertAt(args.Index(), insertedEntry);
-				return;
-			}
-			case CollectionChange::ItemRemoved:
-			{
-				_Settings.GlobalSettings().NewProjectMenu().RemoveAt(args.Index());
-				return;
-			}
-			case CollectionChange::ItemChanged:
-			{
-				const auto& modifiedEntry = _rootEntries.GetAt(args.Index());
-				_Settings.GlobalSettings().NewProjectMenu().SetAt(args.Index(), NewProjectMenuEntryViewModel::GetModel(modifiedEntry));
-				return;
-			}
-			}
-		});
+		//_rootEntries = _ConvertToViewModelEntries(nullptr, _Settings);
+		//_rootEntriesChangedRevoker = _rootEntries.VectorChanged(winrt::auto_revoke, [this](auto&&, const IVectorChangedEventArgs& args) {
+		//	switch (args.CollectionChange())
+		//	{
+		//	case CollectionChange::Reset:
+		//	{
+		//		// fully replace settings model with view model structure
+		//		std::vector<Model::NewProjectMenuEntry> modelEntries;
+		//		for (const auto& entry : _rootEntries)
+		//		{
+		//			modelEntries.push_back(NewProjectMenuEntryViewModel::GetModel(entry));
+		//		}
+		//		_Settings.GlobalSettings().NewProjectMenu(single_threaded_vector<Model::NewProjectMenuEntry>(std::move(modelEntries)));
+		//		return;
+		//	}
+		//	case CollectionChange::ItemInserted:
+		//	{
+		//		const auto& insertedEntryVM = _rootEntries.GetAt(args.Index());
+		//		const auto& insertedEntry = NewProjectMenuEntryViewModel::GetModel(insertedEntryVM);
+		//		_Settings.GlobalSettings().NewProjectMenu().InsertAt(args.Index(), insertedEntry);
+		//		return;
+		//	}
+		//	case CollectionChange::ItemRemoved:
+		//	{
+		//		_Settings.GlobalSettings().NewProjectMenu().RemoveAt(args.Index());
+		//		return;
+		//	}
+		//	case CollectionChange::ItemChanged:
+		//	{
+		//		const auto& modifiedEntry = _rootEntries.GetAt(args.Index());
+		//		_Settings.GlobalSettings().NewProjectMenu().SetAt(args.Index(), NewProjectMenuEntryViewModel::GetModel(modifiedEntry));
+		//		return;
+		//	}
+		//	}
+		//});
 	}
 
 	void NewProjectMenuViewModel::RequestReorderEntry(const Editor::NewProjectMenuEntryViewModel& vm, bool goingUp)
@@ -330,7 +330,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 		{
 			ProjectCurrentView().RemoveAt(idx);
 
-			if (vm.try_as<Editor::FolderEntryViewModel>())
+			if (vm.try_as<Editor::ProjectFolderEntryViewModel>())
 			{
 				_folderTreeCache = nullptr;
 			}
@@ -382,7 +382,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 		Model::ProjectFolderEntry folderEntry;
 		folderEntry.Name(_AddProjectFolderName);
 
-		const auto& entryVM = make<FolderEntryViewModel>(folderEntry, _Settings);
+		const auto& entryVM = make<ProjectFolderEntryViewModel>(folderEntry, _Settings);
 		ProjectCurrentView().Append(entryVM);
 
 		// Reset state after adding the entry
@@ -425,7 +425,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 		if (!_folderTreeCache)
 		{
 			// Add the root folder
-			auto root = winrt::make<FolderTreeViewEntry>(nullptr);
+			auto root = winrt::make<ProjectFolderTreeViewEntry>(nullptr);
 
 			for (const auto&& entry : _rootEntries)
 			{
@@ -443,17 +443,17 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 		}
 	}
 
-	Collections::IObservableVector<Editor::ProjectFolderTreeViewEntry> NewProjectMenuViewModel::FolderTree() const
+	Collections::IObservableVector<Editor::ProjectFolderTreeViewEntry> NewProjectMenuViewModel::ProjectFolderTree() const
 	{
 		// We could do this...
 		//   if (!_folderTreeCache){ GenerateFolderTree(); }
-		// But FolderTree() gets called when we open the page.
+		// But ProjectFolderTree() gets called when we open the page.
 		// Instead, we generate the tree as needed using GenerateFolderTree()
 		//  which caches the tree.
 		return _folderTreeCache;
 	}
 
-	// This recursively constructs the FolderTree
+	// This recursively constructs the ProjectFolderTree
 	ProjectFolderTreeViewEntry::ProjectFolderTreeViewEntry(Editor::ProjectFolderEntryViewModel folderEntry) :
 		_folderEntry{ folderEntry },
 		_Children{ single_threaded_observable_vector<Editor::ProjectFolderTreeViewEntry>() }
@@ -506,17 +506,17 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 		}
 		case NewProjectMenuEntryType::ProjectAction:
 		{
-			const auto& projVM = viewModel.as<Editor::ActionEntryViewModel>();
+			const auto& projVM = viewModel.as<Editor::ProjectActionEntryViewModel>();
 			return get_self<ProjectActionEntryViewModel>(projVM)->ProjectActionEntry();
 		}
 		case NewProjectMenuEntryType::ProjectSeparator:
 		{
-			const auto& projVM = viewModel.as<Editor::SeparatorEntryViewModel>();
+			const auto& projVM = viewModel.as<Editor::ProjectSeparatorEntryViewModel>();
 			return get_self<ProjectSeparatorEntryViewModel>(projVM)->ProjectSeparatorEntry();
 		}
 		case NewProjectMenuEntryType::ProjectFolder:
 		{
-			const auto& projVM = viewModel.as<Editor::FolderEntryViewModel>();
+			const auto& projVM = viewModel.as<Editor::ProjectFolderEntryViewModel>();
 			return get_self<ProjectFolderEntryViewModel>(projVM)->ProjectFolderEntry();
 		}
 		case NewProjectMenuEntryType::ProjectMatch:

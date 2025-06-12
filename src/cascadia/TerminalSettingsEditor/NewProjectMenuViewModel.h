@@ -49,7 +49,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
         // TODO: remove return nullptr
         Windows::Foundation::Collections::IObservableVector<Model::Project> AvailableProjects() const { return nullptr; }
-        Windows::Foundation::Collections::IObservableVector<Editor::ProjectFolderTreeViewEntry> FolderTree() const;
+        Windows::Foundation::Collections::IObservableVector<Editor::ProjectFolderTreeViewEntry> ProjectFolderTree() const;
         Windows::Foundation::Collections::IObservableVector<Editor::NewProjectMenuEntryViewModel> ProjectCurrentView() const;
         VIEW_MODEL_OBSERVABLE_PROPERTY(Editor::ProjectFolderEntryViewModel, CurrentProjectFolder, nullptr);
         VIEW_MODEL_OBSERVABLE_PROPERTY(Editor::ProjectFolderTreeViewEntry, CurrentProjectFolderTreeViewSelectedItem, nullptr);

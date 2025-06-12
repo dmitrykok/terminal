@@ -127,7 +127,7 @@
                 </ContentControl>
             </DataTemplate>
 
-            <DataTemplate x:Key="FolderEntryTemplate" x:DataType="local:FolderEntryViewModel">
+            <DataTemplate x:Key="ProjectFolderEntryTemplate" x:DataType="local:ProjectFolderEntryViewModel">
                 <!--
                     Most of this was copied from NewProjectMenuEntryControlsWrapper.
                     We really just added the Edit button here.
@@ -165,14 +165,14 @@
                         Spacing="5">
                         <Button
                             x:Uid="NewProjectMenuEntry_EditFolder"
-                            Click="EditEntry_Clicked"
+                            Click="ProjectEditEntry_Clicked"
                             DataContext="{Binding Mode=OneWay}"
                             Style="{StaticResource ExtraSmallButtonStyle}">
                             <FontIcon FontSize="{StaticResource StandardIconSize}" Glyph="&#xE70F;" />
                         </Button>
                         <Button
                             x:Uid="NewProjectMenuEntry_ReorderUp"
-                            Click="ReorderEntry_Clicked"
+                            Click="ProjectReorderEntry_Clicked"
                             DataContext="{Binding Mode=OneWay}"
                             Style="{StaticResource ExtraSmallButtonStyle}"
                             Tag="Up">
@@ -180,7 +180,7 @@
                         </Button>
                         <Button
                             x:Uid="NewProjectMenuEntry_ReorderDown"
-                            Click="ReorderEntry_Clicked"
+                            Click="ProjectReorderEntry_Clicked"
                             DataContext="{Binding Mode=OneWay}"
                             Style="{StaticResource ExtraSmallButtonStyle}"
                             Tag="Down">
@@ -188,7 +188,7 @@
                         </Button>
                         <Button
                             x:Uid="NewProjectMenuEntry_Delete"
-                            Click="DeleteEntry_Clicked"
+                            Click="ProjectDeleteEntry_Clicked"
                             DataContext="{Binding Mode=OneWay}"
                             Style="{StaticResource DeleteExtraSmallButtonStyle}">
                             <FontIcon FontSize="{StaticResource StandardIconSize}" Glyph="&#xE74D;" />
@@ -431,7 +431,7 @@
                         x:Uid="NewProjectMenu_AddFolder_FolderName"
                         MinWidth="{StaticResource StandardBoxMinWidth}"
                         KeyDown="AddProjectFolderNameTextBox_KeyDown"
-                        Text="{x:Bind ViewModel.AddFolderName, Mode=TwoWay}"
+                        Text="{x:Bind ViewModel.AddProjectFolderName, Mode=TwoWay}"
                         TextChanged="AddProjectFolderNameTextBox_TextChanged" />
                     <Button
                         x:Name="AddProjectFolderButton"

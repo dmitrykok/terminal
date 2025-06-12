@@ -27,8 +27,8 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         //   to the view model, we'll just do this instead (much simpler).
         NewProjectMenuListView().SelectionChanged([this](auto&&, auto&&) {
             const auto list = NewProjectMenuListView();
-            MoveToFolderButton().IsEnabled(list.SelectedItems().Size() > 0);
-            DeleteMultipleButton().IsEnabled(list.SelectedItems().Size() > 0);
+            ProjectMoveToFolderButton().IsEnabled(list.SelectedItems().Size() > 0);
+            ProjectDeleteMultipleButton().IsEnabled(list.SelectedItems().Size() > 0);
         });
 
         Automation::AutomationProperties::SetName(ProjectMoveToFolderButton(), RS_(L"NewProjectMenu_MoveToFolderTextBlock/Text"));
@@ -48,12 +48,12 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
     void NewProjectMenu::ProjectFolderPickerDialog_Opened(const IInspectable& /*sender*/, const Controls::ContentDialogOpenedEventArgs& /*e*/)
     {
-        // Ideally, we'd bind IsPrimaryButtonEnabled to something like mtu:Converters.isEmpty(FolderTree.SelectedItems.Size) in the XAML.
-        // Similar to above, the XAML compiler can't find FolderTree when we try that.
+        // Ideally, we'd bind IsPrimaryButtonEnabled to something like mtu:Converters.isEmpty(ProjectFolderTree.SelectedItems.Size) in the XAML.
+        // Similar to above, the XAML compiler can't find ProjectFolderTree when we try that.
         // To make matters worse, SelectionChanged doesn't exist for WinUI 2's TreeView.
         // Let's just select the first item and call it a day.
         _ViewModel.GenerateFolderTree();
-        _ViewModel.CurrentProjectFolderTreeViewSelectedItem(_ViewModel.FolderTree().First().Current());
+        _ViewModel.CurrentProjectFolderTreeViewSelectedItem(_ViewModel.ProjectFolderTree().First().Current());
     }
 
     void NewProjectMenu::ProjectFolderPickerDialog_PrimaryButtonClick(const IInspectable& /*sender*/, const Controls::ContentDialogButtonClickEventArgs& /*e*/)
@@ -66,13 +66,13 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         }
 
         // now actually move them
-        _ViewModel.RequestMoveEntriesToFolder(single_threaded_vector<Editor::NewProjectMenuEntryViewModel>(std::move(entries)), ProjectFolderTreeView().SelectedItem().as<Editor::FolderTreeViewEntry>().FolderEntryVM());
+        _ViewModel.RequestMoveEntriesToFolder(single_threaded_vector<Editor::NewProjectMenuEntryViewModel>(std::move(entries)), ProjectFolderTreeView().SelectedItem().as<Editor::ProjectFolderTreeViewEntry>().FolderEntryVM());
     }
 
     void NewProjectMenu::ProjectEditEntry_Clicked(const IInspectable& sender, const RoutedEventArgs& /*e*/)
     {
         const auto folderVM = sender.as<FrameworkElement>().DataContext().as<Editor::ProjectFolderEntryViewModel>();
-        _ViewModel.CurrentFolder(folderVM);
+        _ViewModel.CurrentProjectFolder(folderVM);
     }
 
     void NewProjectMenu::ProjectReorderEntry_Clicked(const IInspectable& sender, const RoutedEventArgs& /*e*/)
@@ -116,24 +116,24 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         _ScrollToEntry(_ViewModel.RequestAddSelectedProjectEntry());
     }
 
-    void NewProjectMenu::AddSeparatorButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
+    void NewProjectMenu::AddProjectSeparatorButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
     {
-        _ScrollToEntry(_ViewModel.RequestAddSeparatorEntry());
+        _ScrollToEntry(_ViewModel.RequestAddProjectSeparatorEntry());
     }
 
-    void NewProjectMenu::AddFolderButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
+    void NewProjectMenu::AddProjectFolderButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
     {
-        _ScrollToEntry(_ViewModel.RequestAddFolderEntry());
+        _ScrollToEntry(_ViewModel.RequestAddProjectFolderEntry());
     }
 
-    void NewProjectMenu::AddMatchProjectsButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
+    void NewProjectMenu::AddProjectMatchButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
     {
         _ScrollToEntry(_ViewModel.RequestAddProjectMatcherEntry());
     }
 
-    void NewProjectMenu::AddRemainingProjectsButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
+    void NewProjectMenu::AddProjectRemainingButton_Clicked(const IInspectable& /*sender*/, const RoutedEventArgs& /*e*/)
     {
-        _ScrollToEntry(_ViewModel.RequestAddRemainingProjectsEntry());
+        _ScrollToEntry(_ViewModel.RequestAddProjectRemainingEntry());
     }
 
     // As a QOL improvement, we scroll to the newly added entry.
@@ -146,15 +146,15 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         listView.ScrollIntoView(entry);
     }
 
-    void NewProjectMenu::AddFolderNameTextBox_KeyDown(const IInspectable& /*sender*/, const Input::KeyRoutedEventArgs& e)
+    void NewProjectMenu::AddProjectFolderNameTextBox_KeyDown(const IInspectable& /*sender*/, const Input::KeyRoutedEventArgs& e)
     {
         if (e.Key() == Windows::System::VirtualKey::Enter)
         {
             // We need to manually set the FolderName here because the TextBox's TextChanged event hasn't fired yet.
-            if (const auto folderName = FolderNameTextBox().Text(); !folderName.empty())
+            if (const auto folderName = ProjectFolderNameTextBox().Text(); !folderName.empty())
             {
-                _ViewModel.AddFolderName(folderName);
-                const auto entry = _ViewModel.RequestAddFolderEntry();
+                _ViewModel.AddProjectFolderName(folderName);
+                const auto entry = _ViewModel.RequestAddProjectFolderEntry();
                 NewProjectMenuListView().ScrollIntoView(entry);
             }
         }
