@@ -179,7 +179,7 @@ if (-not $NoPackage -and $Bundle) {
         Invoke-Expression $makeappxCmd
 
         # Sign the bundle using signtool
-        $certPath = ".\WindowsTerminal.pfx"
+        $certPath = ".\Dm17tryK.pfx"
         if (Test-Path $certPath) {
             # Prompt for the certificate password securely
             $certPassword = Read-Host -AsSecureString "Enter the password for the certificate"

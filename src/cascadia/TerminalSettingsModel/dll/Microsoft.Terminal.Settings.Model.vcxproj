@@ -36,6 +36,7 @@
     <ClInclude Include="../KeyChordSerialization.h" />
     <ClInclude Include="../KeyMapping.h" />
     <ClInclude Include="../Profile.h" />
+    <ClInclude Include="../Project.h" />
     <ClInclude Include="../TerminalWarnings.h" />
     <ClInclude Include="../NewTabMenuEntry.h" />
     <ClInclude Include="../ActionEntry.h">
@@ -58,6 +59,28 @@
     </ClInclude>
     <ClInclude Include="../MatchProfilesEntry.h">
       <DependentUpon>../NewTabMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../NewProjectMenuEntry.h" />
+    <ClInclude Include="../ProjectActionEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../ProjectSeparatorEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../ProjectFolderEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../ProjectEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../ProjectRemainingEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../ProjectCollectionEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="../ProjectMatchEntry.h">
+      <DependentUpon>../NewProjectMenuEntry.h</DependentUpon>
     </ClInclude>
   </ItemGroup>
   <!-- ========================= Cpp Files ======================== -->
@@ -89,7 +112,6 @@
     <ProjectReference Include="$(OpenConsoleDir)src\cascadia\TerminalConnection\TerminalConnection.vcxproj">
       <Private>false</Private>
     </ProjectReference>
-
     <ProjectReference Include="$(OpenConsoleDir)src\cascadia\TerminalControl\dll\TerminalControl.vcxproj">
       <!-- Private:true and ReferenceOutputAssembly:false, in combination with
       the manual reference to TerminalControl.winmd below make sure that this
@@ -98,7 +120,6 @@
       <Private>true</Private>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-
     <!-- Reference Microsoft.Terminal.Settings.ModelLib here, so we can use its winmd as
     our winmd. This didn't work correctly in VS2017, you'd need to
     manually reference the lib -->
@@ -106,7 +127,6 @@
       <Private>true</Private>
     </ProjectReference>
   </ItemGroup>
-
   <ItemGroup>
     <!-- Manually add a reference to TerminalControl here. We need this so
     MDMERGE will know where the TermControl types are defined. However, we need
@@ -118,7 +138,6 @@
       <Private>false</Private>
       <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
     </Reference>
-
     <Reference Include="Microsoft.Terminal.Core">
       <HintPath>$(OpenConsoleCommonOutDir)TerminalCore\Microsoft.Terminal.Core.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
@@ -126,7 +145,6 @@
       <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
     </Reference>
   </ItemGroup>
-
   <ItemDefinitionGroup>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);user32.lib;$(IntDir)\..\Microsoft.Terminal.Settings.Model.lib\Microsoft.Terminal.Settings.Model.res</AdditionalDependencies>
@@ -140,7 +158,6 @@
     </Reference>
   </ItemDefinitionGroup>
   <Import Project="$(OpenConsoleDir)src\cppwinrt.build.post.props" />
-
   <!-- This -must- go after cppwinrt.build.post.props because that includes many VS-provided props including appcontainer.common.props, which stomps on what cppwinrt.targets did. -->
   <Import Project="$(OpenConsoleDir)src\common.nugetversions.targets" />
 </Project>

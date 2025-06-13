@@ -1,0 +1,85 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+import "Project.idl";
+
+namespace Microsoft.Terminal.Settings.Model
+{
+    enum NewProjectMenuEntryType
+    {
+        Invalid = 0,
+        Project,
+        ProjectSeparator,
+        ProjectFolder,
+        ProjectRemaining,
+        ProjectMatch,
+        ProjectAction
+    };
+
+    [default_interface] unsealed runtimeclass NewProjectMenuEntry
+    {
+        NewProjectMenuEntryType Type;
+    }
+
+    [default_interface] runtimeclass ProjectSeparatorEntry : NewProjectMenuEntry
+    {
+        ProjectSeparatorEntry();
+    }
+
+    [default_interface] runtimeclass ProjectEntry : NewProjectMenuEntry
+    {
+        ProjectEntry();
+        ProjectEntry(String project);
+
+        Project Project;
+        Int32 ProjectIndex;
+        String Icon;
+    }
+
+    [default_interface] runtimeclass ProjectActionEntry : NewProjectMenuEntry
+    {
+        ProjectActionEntry();
+
+        String ActionId;
+        String Icon;
+    }
+
+    enum ProjectFolderEntryInlining
+    {
+        Never = 0,
+        Auto
+    };
+
+    [default_interface] runtimeclass ProjectFolderEntry : NewProjectMenuEntry
+    {
+        ProjectFolderEntry();
+        ProjectFolderEntry(String name);
+
+        String Name;
+        String Icon;
+        ProjectFolderEntryInlining Inlining;
+        Boolean AllowEmpty;
+
+        IVector<NewProjectMenuEntry> Entries();
+        IVector<NewProjectMenuEntry> RawEntries;
+    }
+
+    [default_interface] unsealed runtimeclass ProjectCollectionEntry : NewProjectMenuEntry
+    {
+        IMap<Int32, Project> Projects;
+    }
+
+    [default_interface] runtimeclass ProjectRemainingEntry : ProjectCollectionEntry
+    {
+        ProjectRemainingEntry();
+    }
+
+    [default_interface] runtimeclass ProjectMatchEntry : ProjectCollectionEntry
+    {
+        ProjectMatchEntry();
+
+        String Name;
+        String Commandline;
+        String Source;
+    }
+}

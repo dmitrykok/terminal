@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Natvis Include="$(SolutionDir)tools\ConsoleTypes.natvis" />
-    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
   </ItemGroup>
   <ItemGroup>
     <PRIResource Include="Resources\en-US\Resources.resw" />
@@ -31,6 +30,7 @@
     <Midl Include="SettingContainer.idl" />
     <Midl Include="TerminalColorConverters.idl" />
     <Midl Include="NewTabMenuViewModel.idl" />
+    <Midl Include="NewProjectMenuViewModel.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(ProjectName).def" />
@@ -54,5 +54,10 @@
     <Page Include="KeyChordListener.xaml" />
     <Page Include="NullableColorPicker.xaml" />
     <Page Include="NewTabMenu.xaml" />
+    <Page Include="Compatibility.xaml" />
+    <Page Include="NewProjectMenu.xaml" />
+    <Page Include="Extensions.xaml" />
+    <Page Include="Profiles_Base_Orphaned.xaml" />
+    <Page Include="Profiles_Terminal.xaml" />
   </ItemGroup>
 </Project>

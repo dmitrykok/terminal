@@ -80,6 +80,9 @@
     <ClInclude Include="NewTabMenu.h">
       <DependentUpon>NewTabMenu.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="NewProjectMenu.h">
+      <DependentUpon>NewProjectMenu.xaml</DependentUpon>
+    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -123,6 +126,10 @@
     </ClInclude>
     <ClInclude Include="NewTabMenuViewModel.h">
       <DependentUpon>NewTabMenuViewModel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="NewProjectMenuViewModel.h">
+      <DependentUpon>NewProjectMenuViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="Extensions.h">
@@ -200,6 +207,9 @@
     <Page Include="NewTabMenu.xaml">
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="NewProjectMenu.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainPage.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -269,6 +279,9 @@
     <ClCompile Include="NewTabMenu.cpp">
       <DependentUpon>NewTabMenu.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="NewProjectMenu.cpp">
+      <DependentUpon>NewProjectMenu.xaml</DependentUpon>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -314,6 +327,10 @@
     </ClCompile>
     <ClCompile Include="NewTabMenuViewModel.cpp">
       <DependentUpon>NewTabMenuViewModel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="NewProjectMenuViewModel.cpp">
+      <DependentUpon>NewProjectMenuViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="Extensions.cpp">
@@ -394,6 +411,10 @@
       <DependentUpon>NewTabMenu.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
+    <Midl Include="NewProjectMenu.idl">
+      <DependentUpon>NewProjectMenu.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
     <Midl Include="Interaction.idl">
       <DependentUpon>Interaction.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -419,6 +440,7 @@
     <Midl Include="GlobalAppearanceViewModel.idl" />
     <Midl Include="LaunchViewModel.idl" />
     <Midl Include="NewTabMenuViewModel.idl" />
+    <Midl Include="NewProjectMenuViewModel.idl" />
     <Midl Include="Extensions.idl">
       <DependentUpon>Extensions.xaml</DependentUpon>
       <SubType>Code</SubType>

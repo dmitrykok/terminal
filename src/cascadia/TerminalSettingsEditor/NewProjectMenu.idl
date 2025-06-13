@@ -1,0 +1,25 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+import "NewProjectMenuViewModel.idl";
+
+namespace Microsoft.Terminal.Settings.Editor
+{
+    [default_interface] runtimeclass NewProjectMenu : Windows.UI.Xaml.Controls.Page
+    {
+        NewProjectMenu();
+        NewProjectMenuViewModel ViewModel { get; };
+    }
+
+    [default_interface] runtimeclass NewProjectMenuEntryTemplateSelector : Windows.UI.Xaml.Controls.DataTemplateSelector
+    {
+        NewProjectMenuEntryTemplateSelector();
+
+        Windows.UI.Xaml.DataTemplate ProjectEntryTemplate;
+        Windows.UI.Xaml.DataTemplate ProjectActionEntryTemplate;
+        Windows.UI.Xaml.DataTemplate ProjectSeparatorEntryTemplate;
+        Windows.UI.Xaml.DataTemplate ProjectFolderEntryTemplate;
+        Windows.UI.Xaml.DataTemplate ProjectMatchEntryTemplate;
+        Windows.UI.Xaml.DataTemplate ProjectRemainingEntryTemplate;
+    }
+}

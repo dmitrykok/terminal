@@ -1,0 +1,36 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
+import "IAppearanceConfig.idl";
+import "ISettingsModelObject.idl";
+import "FontConfig.idl";
+#include "IInheritable.idl.h"
+
+#define INHERITABLE_PROJECT_SETTING(Type, Name) \
+    _BASE_INHERITABLE_SETTING(Type, Name);      \
+    Microsoft.Terminal.Settings.Model.Project Name##OverrideSource { get; }
+
+#define COMMA ,
+
+namespace Microsoft.Terminal.Settings.Model
+{
+    [default_interface] runtimeclass Project : Windows.Foundation.IStringable, ISettingsModelObject {
+        Project();
+        Project(Guid guid);
+
+        // True if the user explicitly removed this Project from settings.json.
+        Boolean Deleted { get; };
+        // True if the user *kept* this Project, but it disappeared from the system.
+        Boolean Orphaned { get; };
+
+        // Helper for magically using a commandline for an icon for a Project
+        // without an explicit icon.
+        String EvaluatedIcon { get; };
+
+        INHERITABLE_PROJECT_SETTING(Guid, Guid);
+        INHERITABLE_PROJECT_SETTING(String, Name);
+        INHERITABLE_PROJECT_SETTING(String, Source);
+        INHERITABLE_PROJECT_SETTING(Boolean, Hidden);
+        INHERITABLE_PROJECT_SETTING(String, Icon);
+    }
+}
